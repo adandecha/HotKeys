@@ -1,0 +1,42 @@
+Steps to run HotKeys as Admin, every time the Windows starts.
+
+    Right click on the HotKeys.ahk file, and compile it.
+    Move the generated HotKeys.exe to '%UserProfile%/Documents/HotKeys.exe'.
+
+    Open 'Task Scheduler' and in that do 'Create Task'.
+
+    In 'General' tab,
+        Give the task a name, say, 'HotKeys'.
+        Check 'Run only when user is logged on'.
+        Check 'Run with highest privileges'.
+        Configure for 'Windows 10'.
+
+    In 'Triggers' tab,
+        Click 'New...'
+        In 'Begin the task' select 'At startup'
+
+    In 'Actions' tab,
+        Click 'New...'
+        Action start a program.
+        Browse and select the before compiled HotKeys.exe file.
+
+    In 'Conditions' tab,
+        Uncheck 'Start the task only if computer is idle for'
+        Uncheck 'Start the task only if computer is on AC power'
+        Uncheck 'Wake the computer to run this task'
+        Uncheck 'Start only if the following network is available'
+
+    In 'Settings' tab,
+        Check 'Allow task to be run on demand'
+        Check 'Run task asap after a scheduled start is missed'
+        Uncheck 'If the task fails restart every'
+        Uncheck 'Stop task if runs longer than'
+        Check 'If the running task doesn't end when requested force it to stop'
+        Uncheck 'If the task is not scheduled to run again, delete it after'
+        If already running then choose to stop the existing instance.
+
+    Goto '%AppData%/Microsoft/Windows/Start Menu/Programs/Startup'
+    Create a new shortcut, and that too to 'schtasks.exe /run /tn HotKeys'
+
+    Done!
+
