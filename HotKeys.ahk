@@ -37,6 +37,8 @@ ShowKeysOn := False
 
 LogKeyPresses := False
 
+AltTab := True
+
 KeepExistingCapsLockStateButToPermState()
 
 ShowTip(M_On_Load, C_On_Load, F_H_M_On_Load, True)
@@ -430,7 +432,6 @@ CapsLock::
     Return
 
 RCtrl::
-CapsLock & Tab::
     Suspend
     If (A_IsSuspended) {
         ShowTip(M_Disabled, C_HK_Toggle, F_H_M_HK_Toggle, True)
@@ -438,5 +439,18 @@ CapsLock & Tab::
         ShowTip(M_Enabled, C_HK_Toggle, F_H_M_HK_Toggle, False)
         OverlayCapsLockStatusMessage()
     }
+    Return
+
+CapsLock & Tab::
+    Suspend, Permit
+    Global AltTab
+    AltTab := not AltTab
+    Return
+
+!Tab::
+    Suspend, Permit
+    Global AltTab
+    If (AltTab)
+        SendInput {Alt Down}{Tab}
     Return
 
