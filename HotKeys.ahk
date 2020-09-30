@@ -1,5 +1,5 @@
 ﻿Full_Command_Line := DllCall("GetCommandLine", "str")
-if not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
+if Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 {
     try
     {
@@ -39,6 +39,9 @@ LogKeyPresses := False
 
 AltTab := True
 
+CaseState := 0
+CaseText := ""
+
 KeepExistingCapsLockStateButToPermState()
 
 ShowTip(M_On_Load, C_On_Load, F_H_M_On_Load, True)
@@ -60,6 +63,7 @@ HideTip(ByRef Id) {
 
 ShowTip(ByRef Text, ByRef ConstId, ByRef HiderFunc, ByRef Temp) {
     ToolTip, % Text, 0, 0, % ConstId
+
     If (Temp)
         SetTimer, % HiderFunc, -1000
     Else
@@ -418,6 +422,13 @@ CapsLock & ]::
     ShowKey("Display_On_Second_Screen_Only")
     Return
 
+CapsLock & Esc::
+    Suspend, Permit
+Esc::
+    SendInput {Ctrl Down}{Shift Down}{Esc Down}{Ctrl Up}{Shift Up}{Esc Up}
+    ShowKey("Task Manager")
+    Return
+
 CapsLock & y::
     Suspend, Permit
 *y::
@@ -444,7 +455,7 @@ RCtrl::
 CapsLock & Tab::
     Suspend, Permit
     Global AltTab
-    AltTab := not AltTab
+    AltTab := Not AltTab
     Return
 
 !Tab::
@@ -452,5 +463,32 @@ CapsLock & Tab::
     Global AltTab
     If (AltTab)
         SendInput {Alt Down}{Tab}
+    Return
+
+CapsLock & .::
+    Suspend, Permit
+    Global CaseState, CaseText
+    ClipBoard := ""
+    SendInput ^{Insert}
+    Sleep 200
+    ClipText := ClipBoard
+    If (0 < StrLen(ClipText)) {
+        CaseText := ClipText
+    } Else {
+        PrevTextLen := StrLen(CaseText)
+        SendInput {BackSpace %PrevTextLen%}
+    }
+    If (CaseState = "0") {
+        StringUpper ClipText, CaseText
+        CaseState := 1
+    } else If (CaseState = "1") {
+        StringLower ClipText, CaseText
+        CaseState := 2
+    } else {
+        ClipText := CaseText
+        CaseState := 0
+    }
+    ClipBoard := ClipText
+    SendInput +{Insert}
     Return
 
