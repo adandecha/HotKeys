@@ -1,9 +1,9 @@
 ﻿Full_Command_Line := DllCall("GetCommandLine", "str")
-if Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
+If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 {
     try
     {
-        if A_IsCompiled
+        If A_IsCompiled
             Run *RunAs "%A_ScriptFullPath%" /restart
         else
             Run *RunAs "%A_AhkPath%" /restart "%A_ScriptFullPath%"
@@ -129,12 +129,12 @@ ShowKey(K) {
     Global ShowKeysOn, C_Key_Press, F_H_M_Key_Press, LogKeyPresses
     Static KeyPresses := ""
     M_Temp := True
-    if (LogKeyPresses) {
+    If (LogKeyPresses) {
         KeyPresses := % KeyPresses " " K
         K = % KeyPresses
         M_Temp := False
     }
-    if (ShowKeysOn)
+    If (ShowKeysOn)
         ShowTip(K, C_Key_Press, F_H_M_Key_Press, M_Temp)
     Return
 }
@@ -474,21 +474,33 @@ CapsLock & .::
     ClipText := ClipBoard
     If (0 < StrLen(ClipText)) {
         CaseText := ClipText
-    } Else {
+    } Else If (0 < StrLen(CaseText)) {
         PrevTextLen := StrLen(CaseText)
         SendInput {BackSpace %PrevTextLen%}
+    } Else {
+        Return
     }
     If (CaseState = "0") {
-        StringUpper ClipText, CaseText
+        StringUpper ClipText, CaseText, T
         CaseState := 1
     } else If (CaseState = "1") {
-        StringLower ClipText, CaseText
+        StringUpper ClipText, CaseText
         CaseState := 2
+    } else If (CaseState = "2") {
+        StringLower ClipText, CaseText
+        CaseState := 3
     } else {
         ClipText := CaseText
         CaseState := 0
     }
     ClipBoard := ClipText
     SendInput +{Insert}
+    SetTimer, ResetCaseState, -7000
+    Return
+
+ResetCaseState:
+    Global CaseState, CaseText
+    CaseState := 0
+    CaseText := ""
     Return
 
