@@ -143,7 +143,7 @@ CapsLock & F1::
     Suspend, Permit
 *F1::
     ShowKeysOn := !ShowKeysOn
-    ShowKey("Show_Keys")
+    ShowKey("Show Help Messages.")
     Return
 
 CapsLock & h::
@@ -175,7 +175,7 @@ CapsLock & w::
     Suspend, Permit
 *w::
     SendInput {Blind}{PgUp}
-    ShowKey("Page_Up")
+    ShowKey("Page Up")
     Return
 CapsLock & a::
     Suspend, Permit
@@ -187,7 +187,7 @@ CapsLock & s::
     Suspend, Permit
 *s::
     SendInput {Blind}{PgDn}
-    ShowKey("Page_Down")
+    ShowKey("Page Down")
     Return
 CapsLock & d::
     Suspend, Permit
@@ -213,13 +213,13 @@ CapsLock & m::
     Suspend, Permit
 *m::
     SendInput {AppsKey}
-    ShowKey("Context_Menu")
+    ShowKey("Context Menu")
     Return
 CapsLock & p::
     Suspend, Permit
 *p::
     SendInput {Blind}{Click}
-    ShowKey("Left_Click")
+    ShowKey("Left Click")
     Return
 
 CapsLock & x::
@@ -272,39 +272,39 @@ CapsLock & q::
     Suspend, Permit
 *q::
     SendInput {Volume_Down}
-    ShowKey("Volume_Down")
+    ShowKey("Volume Down")
     Return
 CapsLock & e::
     Suspend, Permit
 *e::
     SendInput {Volume_Up}
-    ShowKey("Volume_Up")
+    ShowKey("Volume Up")
     Return
 
 CapsLock & g::
     Suspend, Permit
 *g::
     SendInput {Volume_Mute}
-    ShowKey("Volume_Mute")
+    ShowKey("Volume Mute")
     Return
 CapsLock & z::
     Suspend, Permit
 *z::
     SendInput {Media_Play_Pause}
-    ShowKey("Media_Play_Pause")
+    ShowKey("Media Play/Pause")
     Return
 
 CapsLock & b::
     Suspend, Permit
 *b::
     SendInput {Media_Previous}
-    ShowKey("Media_Previous")
+    ShowKey("Media Previous")
     Return
 CapsLock & n::
     Suspend, Permit
 *n::
     SendInput {Media_Next}
-    ShowKey("Media_Next")
+    ShowKey("Media Next")
     Return
 
 CapsLock & F5::
@@ -410,7 +410,7 @@ CapsLock & [::
     SendInput #p
     Sleep 500
     SendInput {Home}{Enter}{Esc}
-    ShowKey("Display_On_PC_Screen_Only")
+    ShowKey("Display On PC Screen Only")
     Return
 
 CapsLock & ]::
@@ -419,7 +419,7 @@ CapsLock & ]::
     SendInput #p
     Sleep 500
     SendInput {End}{Enter}{Esc}
-    ShowKey("Display_On_Second_Screen_Only")
+    ShowKey("Display On Second Screen Only")
     Return
 
 CapsLock & Esc::
@@ -456,6 +456,10 @@ CapsLock & Tab::
     Suspend, Permit
     Global AltTab
     AltTab := Not AltTab
+    If (AltTab)
+        ShowKey("ReEnabling Alt+Tab Window Switching.")
+    Else
+        ShowKey("Disabling Alt+Tab Window Switching.")
     Return
 
 !Tab::
@@ -463,6 +467,8 @@ CapsLock & Tab::
     Global AltTab
     If (AltTab)
         SendInput {Alt Down}{Tab}
+    Else
+        ShowKey("Alt+Tab Window Switching Is Disabled.")
     Return
 
 CapsLock & .::
@@ -483,15 +489,19 @@ CapsLock & .::
     If (CaseState = "0") {
         StringUpper ClipText, CaseText, T
         CaseState := 1
+        ShowKey("Capitalise 1st Letters.")
     } else If (CaseState = "1") {
         StringUpper ClipText, CaseText
         CaseState := 2
+        ShowKey("Capitalise All Letters.")
     } else If (CaseState = "2") {
         StringLower ClipText, CaseText
         CaseState := 3
+        ShowKey("Lowercase All Letters.")
     } else {
         ClipText := CaseText
         CaseState := 0
+        ShowKey("Restore Original Text.")
     }
     ClipBoard := ClipText
     SendInput +{Insert}

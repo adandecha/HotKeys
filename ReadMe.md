@@ -19,11 +19,14 @@ Done!
 **Using Hotkeys:**
 
 ```
-RCtrl or CapsLock+Tab can used to toggle the HotKeys on or off.
-For example, to generate the Home key, one can use the sequence - RCtrl A RCtrl.
-
 CapsLock can be used as the modifier key to the HotKeys.
-For example, to generate the Home key, one can simpy use - CapsLock+A - instead of - RCtrl A RCtrl.
+For example, to generate the Home key, one can hit - CapsLock+A - keep CapsLock pressed and hit A.
+
+RCtrl can used to toggle the HotKeys on or off.
+For example, to generate the same Home key, one can also press keys - RCtrl A RCtrl.
+
+Following is the list of HotKeys when used in conjuction with CapsLock or after RCtrl.
+Left is what's pressed, and right is what it results into.
 
 A   : Home
 D   : End
@@ -77,13 +80,15 @@ N   : Next track
 -   : F11
 +   : F12
 
+Tab : Disable Alt+Tab functionality.
+.   : Switch case of selected text (capitalise 1st letters, all caps, all smalls, restore text)
+
 [   : Project to PC screen only
 ]   : Project to second screen only
 
 F1  : Show/hide help for each HotKey pressed.
 F4  : Exit the HotKeys app.
 
-Tab : Toggle the HotKeys app.
 ```
 
 **Also,**
