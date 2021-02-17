@@ -1,4 +1,8 @@
-An AutoHotKey script to bind some very useful hotkeys to the keyboard.
+An AutoHotKey script to bind some very useful CapsLock hotkeys to the keyboard.
+
+An already compiled executable can be found **[here](https://drive.google.com/open?id=1l-_ly_VcWkBHzeugyiI1za9_tW2-sLh9)**.
+<br/>
+To compile it manually please read through the following.
 
 **Setting things up:**
 
@@ -28,11 +32,6 @@ For example, to generate the same Home key, one can also press keys - RCtrl A RC
 Following is the list of HotKeys when used in conjuction with CapsLock or after RCtrl.
 Left is what's pressed, and right is what it results into.
 
-A   : Home
-D   : End
-
-W   : PageUp
-S   : PageDown
 
 H   : Left
 L   : Right
@@ -43,29 +42,27 @@ J   : Down
 I   : Backspace
 O   : Delete
 
+A   : Home
+D   : End
+
+W   : PageUp
+S   : PageDown
+
+
 X   : Cut (Ctrl+X)
 C   : Copy (Ctrl+C)
 
 V   : Paste (Shift+Insert)
 T   : Type in clipboard text (can be used where text is not allowed to be pasted)
 
-U   : UnDo (Ctrl+Z)
-R   : ReDo (Ctrl+Y)
+/   : Toggle notifying on clipboard text changes
 
-F   : Find (Ctrl+F)
-Y   : Save screenshot (Win+PrintScreen)
+B   : Reset clipboard to text copied earlier
+N   : Reset clipboard to text copied later
 
-M   : Context menu
-P   : Left click
+BS  : BackSpace, forget entire history of clipboard texts
+\   : Forget current clipboard text from history
 
-Q   : Volume down
-E   : Volume up
-
-G   : Volume mute
-Z   : Pause/play
-
-B   : Previous track
-N   : Next track
 
 1   : F1
 2   : F2
@@ -80,8 +77,25 @@ N   : Next track
 -   : F11
 +   : F12
 
+
+Q   : Volume down
+E   : Volume up
+
+G   : Volume mute
+Z   : Pause/play
+
+,   : Previous track
+.   : Next track
+
+
+U   : UnDo (Ctrl+Z)
+R   : ReDo (Ctrl+Y)
+F   : Find (Ctrl+F)
+
+Y   : Save screenshot (Win+PrintScreen)
+
 Tab : Disable Alt+Tab functionality.
-.   : Switch case of selected text (capitalise 1st letters, all caps, all smalls, restore text)
+'   : Switch case of selected text (capitalise 1st letters, all caps, all smalls, restore text)
 
 [   : Project to PC screen only
 ]   : Project to second screen only
@@ -104,7 +118,5 @@ It can be restored by running,
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Restore_LC_LW_RA.reg](Restore_LC_LW_RA.reg), and restarting Windows.
 <br/>
 <br/>
-An already compiled executable can be found **[here](https://drive.google.com/open?id=1l-_ly_VcWkBHzeugyiI1za9_tW2-sLh9)**.
-
 **Enjoy!**
 

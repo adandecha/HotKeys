@@ -26,12 +26,14 @@ C_Caps_Toggle := 2
 C_HK_Toggle := 3
 C_Key_Press := 4
 C_M_Arbitrary := 5
+C_M_ClipBoard := 6
 
 F_H_M_On_Load := Func("HideTip").Bind(C_On_Load)
 F_H_M_Caps_Toggle := Func("HideTip").Bind(C_Caps_Toggle)
 F_H_M_HK_Toggle := Func("HideTip").Bind(C_HK_Toggle)
 F_H_M_Key_Press := Func("HideTip").Bind(C_Key_Press)
 F_H_M_Arbitrary := Func("HideTip").Bind(C_M_Arbitrary)
+F_H_M_ClipBoard := Func("HideTip").Bind(C_M_ClipBoard)
 
 ShowKeysOn := False
 
@@ -39,20 +41,48 @@ LogKeyPresses := False
 
 AltTab := True
 
-CaseState := 0
-CaseText := ""
+CaseChangeState := 0
+CaseChangeText := ""
 
 KeepExistingCapsLockStateButToPermState()
 
 ShowTip(M_On_Load, C_On_Load, F_H_M_On_Load, True)
 
+ClipStack := []
+Loop, Files, %A_Temp%\ClipText*.txt
+{
+    FileRead, ClipText, %A_LoopFileFullPath%
+    ClipStack.Push(ClipText)
+    FileDelete, %A_LoopFileFullPath%
+}
+ClipCurrIdx := ClipStack.Count()
+OnExit ExitSub
+OnClipBoardChange("ClipBoardListener")
+DisableClipBoardMsgs := True
+; clip can be done well with mutex but still the core win clip
+; itself isn't sync api so need to wait ms even on c# so decided
+; to go with time based approach only
+; assumed 200ms would be enough for clip to be updated
+DisableClipBoardListener := False
+SetTimer, ClipBoardPopulate, -1
+
 Suspend, On
 
 Return
 
-ShowTipArbitrary(ByRef Msg) {
+ShowTipArbitrary(ByRef Msg, ByRef VisibilityTimePeriod := 1000) {
     Global C_M_Arbitrary, F_H_M_Arbitrary
-    ShowTip(Msg, C_M_Arbitrary, F_H_M_Arbitrary, True)
+    ShowTip(Msg, C_M_Arbitrary, F_H_M_Arbitrary, True, VisibilityTimePeriod)
+    Return
+}
+
+ShowTipClipBoard(ByRef Msg, ByRef VisibilityTimePeriod := 3000) {
+    Global C_M_ClipBoard, F_H_M_ClipBoard, DisableClipBoardMsgs
+    If DisableClipBoardMsgs {
+        %F_H_M_ClipBoard%()
+        Return
+    }
+    ShowTip(Msg, C_M_ClipBoard, F_H_M_ClipBoard, True, VisibilityTimePeriod)
     Return
 }
 
@@ -61,11 +91,11 @@ HideTip(ByRef Id) {
     Return
 }
 
-ShowTip(ByRef Text, ByRef ConstId, ByRef HiderFunc, ByRef Temp) {
+ShowTip(ByRef Text, ByRef ConstId, ByRef HiderFunc, ByRef ShowTemporarily, ByRef VisibilityTimePeriod := 1000) {
     ToolTip, % Text, 0, 0, % ConstId
 
-    If (Temp)
-        SetTimer, % HiderFunc, -1000
+    If (ShowTemporarily)
+        SetTimer, % HiderFunc, -%VisibilityTimePeriod%
     Else
         SetTimer, % HiderFunc, Off
     Return
@@ -245,7 +275,7 @@ CapsLock & t::
     Suspend, Permit
 *t::
     SendInput {text}%ClipBoard%
-    ShowKey("Type in clipboard text ..")
+    ShowKey("Types ClipBoard Text.")
     Return
 
 CapsLock & u::
@@ -294,15 +324,15 @@ CapsLock & z::
     ShowKey("Media Play/Pause")
     Return
 
-CapsLock & b::
+CapsLock & ,::
     Suspend, Permit
-*b::
-    SendInput {Media_Previous}
+*,::
+    SendInput {Media_Prev}
     ShowKey("Media Previous")
     Return
-CapsLock & n::
+CapsLock & .::
     Suspend, Permit
-*n::
+*.::
     SendInput {Media_Next}
     ShowKey("Media Next")
     Return
@@ -410,7 +440,7 @@ CapsLock & [::
     SendInput #p
     Sleep 500
     SendInput {Home}{Enter}{Esc}
-    ShowKey("Display On PC Screen Only")
+    ShowKey("Display Only On PC Screen.")
     Return
 
 CapsLock & ]::
@@ -419,7 +449,7 @@ CapsLock & ]::
     SendInput #p
     Sleep 500
     SendInput {End}{Enter}{Esc}
-    ShowKey("Display On Second Screen Only")
+    ShowKey("Display Only On Second Screen.")
     Return
 
 CapsLock & Esc::
@@ -433,7 +463,7 @@ CapsLock & y::
     Suspend, Permit
 *y::
     SendInput #{PrintScreen}
-    F_SK := Func("ShowKey").Bind("Saved screenshot at " RegExReplace(UserProfile, "\\", "/") "/Pictures/Screenshots")
+    F_SK := Func("ShowKey").Bind("Saved ScreenShot At " RegExReplace(UserProfile, "\\", "/") "/Pictures/Screenshots.")
     SetTimer, % F_SK, -500
     Return
 
@@ -454,6 +484,7 @@ RCtrl::
 
 CapsLock & Tab::
     Suspend, Permit
+Tab::
     Global AltTab
     AltTab := Not AltTab
     If (AltTab)
@@ -471,46 +502,180 @@ CapsLock & Tab::
         ShowKey("Alt+Tab Window Switching Is Disabled.")
     Return
 
-CapsLock & .::
+CapsLock & '::
     Suspend, Permit
-    Global CaseState, CaseText
-    ClipBoard := ""
-    SendInput ^{Insert}
-    Sleep 200
-    ClipText := ClipBoard
-    If (0 < StrLen(ClipText)) {
-        CaseText := ClipText
-    } Else If (0 < StrLen(CaseText)) {
-        PrevTextLen := StrLen(CaseText)
-        SendInput {BackSpace %PrevTextLen%}
-    } Else {
-        Return
-    }
-    If (CaseState = "0") {
-        StringUpper ClipText, CaseText, T
-        CaseState := 1
+*'::
+    Global CaseChangeState, CaseChangeText
+    ShowKey("Capitalise Selected Text Cycling Through,`n1st Caps -> All Caps -> All Smalls -> Original.")
+    If (CaseChangeState = "0") {
         ShowKey("Capitalise 1st Letters.")
-    } else If (CaseState = "1") {
-        StringUpper ClipText, CaseText
-        CaseState := 2
+        SendInput ^{Insert}
+        Sleep 200
+        CaseChangeText := ClipBoard
+        If (StrLen(CaseChangeText) = 0)
+            Return
+        CaseChangeState := 1
+        StringUpper ClipText, CaseChangeText, T
+    } else If (CaseChangeState = "1") {
         ShowKey("Capitalise All Letters.")
-    } else If (CaseState = "2") {
-        StringLower ClipText, CaseText
-        CaseState := 3
+        StringUpper ClipText, CaseChangeText
+        CaseChangeState := 2
+    } else If (CaseChangeState = "2") {
         ShowKey("Lowercase All Letters.")
+        StringLower ClipText, CaseChangeText
+        CaseChangeState := 3
     } else {
-        ClipText := CaseText
-        CaseState := 0
         ShowKey("Restore Original Text.")
+        ClipText := CaseChangeText
+        CaseChangeState := 0
     }
-    ClipBoard := ClipText
-    SendInput +{Insert}
-    SetTimer, ResetCaseState, -7000
+    ClipBoardPutSync(ClipText)
+    NBS := StrLen(CaseChangeText)
+    SendInput {BackSpace %NBS%}+{Insert}
+    SetTimer, ResetCaseChangeState, -7000
     Return
 
-ResetCaseState:
-    Global CaseState, CaseText
-    CaseState := 0
-    CaseText := ""
+ResetCaseChangeState:
+    Global CaseChangeState, CaseChangeText
+    CaseChangeState := 0
+    CaseChangeText := ""
     Return
+
+CapsLock & BackSpace::
+    Suspend, Permit
+*BackSpace::
+    Global ClipCurrIdx, ClipStack
+    ShowKey("Clear ClipBoard History.")
+    ShowTipClipBoard("ClipBoard History Cleared.")
+    ClipCurrIdx := 0
+    ClipStack := []
+    ClipBoardPutSync("")
+    FileDelete, %A_Temp%\ClipText*.txt
+    Return
+
+CapsLock & \::
+    Suspend, Permit
+*\::
+    Global ClipCurrIdx, ClipStack
+    ShowKey("Forget Current ClipBoard Text From History.")
+    If (ClipCurrIdx = 0) {
+        Return
+    }
+    i := SubStr("0000000000" . ClipCurrIdx, -9)
+    ShowTipClipBoard("Forgetting ..`n`nClipText#" i ":`n" ClipStack[ClipCurrIdx])
+    ClipStack.RemoveAt(ClipCurrIdx)
+    ClipCurrIdx := Min(ClipCurrIdx, ClipStack.Count())
+    SetTimer, ClipBoardPopulate, -1
+    Return
+
+CapsLock & b::
+    Suspend, Permit
+*b::
+    Global ClipCurrIdx, ClipStack
+    ShowKey("Set ClipBoard To Text Copied Earlier.")
+    If (ClipCurrIdx = 0) {
+        Return
+    }
+    ClipCurrIdx := (ClipCurrIdx = 1) ? ClipStack.Count() : (ClipCurrIdx - 1)
+    i := SubStr("0000000000" . ClipCurrIdx, -9)
+    ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
+    ; if next CL-b comes immediately then delay setting CB sync'ly
+    ; which in turn allows for tooltips updating faster
+    ; it assumes i can perform next CL-B or ^V or +Ins or Pasting under 600ms
+    SetTimer, ClipBoardPopulate, -1
+    Return
+
+CapsLock & n::
+    Suspend, Permit
+*n::
+    Global ClipCurrIdx, ClipStack
+    ShowKey("Set ClipBoard To Text Copied Later.")
+    If (ClipCurrIdx = 0) {
+        Return
+    }
+    ClipCurrIdx := ClipCurrIdx == ClipStack.Count() ? 1 : (ClipCurrIdx + 1)
+    i := SubStr("0000000000" . ClipCurrIdx, -9)
+    ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
+    SetTimer, ClipBoardPopulate, -1
+    Return
+
+CapsLock & /::
+    Suspend, Permit
+*/::
+    Global ClipCurrIdx, ClipStack, DisableClipBoardMsgs
+    ShowKey((DisableClipBoardMsgs ? "Show" : "Hide") " Notifications For ClipBoard Changes.")
+    DisableClipBoardMsgs := !DisableClipBoardMsgs
+    Msg := "ClipBoard Notifications " (DisableClipBoardMsgs ? "Disabled." : "Enabled.")
+    If (ClipCurrIdx = 0) {
+        ShowTipArbitrary(Msg "`nClipBoard Text History Empty.")
+    } Else {
+        i := SubStr("0000000000" . ClipCurrIdx, -9)
+        ShowTipClipBoard(Msg "`n`nTotal " ClipStack.Count() " ClipText(s) Remembered.`nCurrently On,`nClipText#" i ":`n" ClipStack[ClipCurrIdx])
+        SetTimer, ClipBoardPopulate, -1
+    }
+    Return
+
+ClipBoardPopulate() {
+    Global ClipCurrIdx, ClipStack
+    If (ClipCurrIdx == 0)
+        ClipBoardPutSync("")
+    Else
+        ClipBoardPutSync(ClipStack[ClipCurrIdx])
+}
+
+ClipBoardListener(ClipContentType) {
+    Global ClipCurrIdx, ClipStack, DisableClipBoardListener
+    If (DisableClipBoardListener) {
+        ; ShowTipClipBoard(A_LineNumber ": ClipBoard updated by self.`n" )
+        Return
+    }
+    ClipText := ClipBoard
+    If (ClipContentType != 1 or ClipText == "") {
+        ; ShowTipClipBoard(A_LineNumber ": Empty or non-text ClipBoard.`n" )
+        Return
+    }
+    Loop % ClipStack.Count()
+    {
+        if (ClipText == ClipStack[A_Index]) {
+            i := SubStr("0000000000" . A_Index, -9)
+            ; ShowTipClipBoard(A_LineNumber ": ClipText Already Present.`n" "ClipText#" i ":`n" ClipText)
+            ShowTipClipBoard("ClipText Already Present.`n" "ClipText#" i ":`n" ClipText)
+            ClipCurrIdx := A_Index
+            Return
+        }
+    }
+    ClipStack.Push(ClipText)
+    ClipCurrIdx := ClipStack.Count()
+    i := SubStr("0000000000" . ClipCurrIdx, -9)
+    ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
+}
+
+ExitSub:
+    Suspend, Permit
+    SaveClipBoardHistoryOnDisk()
+    ExitApp
+
+SaveClipBoardHistoryOnDisk() {
+    Global ClipCurrIdx, ClipStack
+    FileDelete, %A_Temp%\ClipText*.txt
+    If (ClipCurrIdx = 0) {
+        ShowTipClipBoard("No ClipTexts To Save On The Disk!")
+        Return
+    }
+    SetFormat, Float, 06.0
+    Loop % ClipStack.Count()
+    {
+        i := SubStr("0000000000" . A_Index, -9)
+        FileAppend, % ClipStack[A_Index], %A_Temp%\ClipText%i%.txt
+    }
+    ShowTipClipBoard("Saved ClipText(s) At,`n" A_Temp "\ClipTextXXXXXXXXXX.txt File(s).")
+}
+
+ClipBoardPutSync(ByRef text) {
+    Global DisableClipBoardListener
+    DisableClipBoardListener := True
+    ClipBoard := text
+    Sleep 200 ; VVIMP: assuming 200 ms would be enough for ClipBoard updation to go through
+    DisableClipBoardListener := False
+}
 
