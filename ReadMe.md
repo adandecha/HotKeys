@@ -35,72 +35,77 @@ Following is the list of HotKeys when used in conjuction with CapsLock or after 
 Left is what's pressed, and right is what it results into.
 
 
-H   : Left
-L   : Right
+A         : Left
+D         : Right
 
-K   : Up
-J   : Down
+W         : Up
+S         : Down
 
-I   : Backspace
-O   : Delete
+I         : Backspace
+O         : Delete
 
-A   : Home
-D   : End
+H         : Home
+L         : End
 
-W   : PageUp
-S   : PageDown
-
-
-X   : Cut (Ctrl+X)
-C   : Copy (Ctrl+C)
-
-V   : Paste (Shift+Insert)
-T   : Type in clipboard text (can be used where text is not allowed to be pasted)
-
-/   : Toggle notifying on clipboard text changes
-
-B   : Reset clipboard to text copied earlier
-N   : Reset clipboard to text copied later
-
-BS  : BackSpace, forget entire history of clipboard texts
-\   : Forget current clipboard text from history
+K         : PageUp
+J         : PageDown
 
 
-1   : F1
-2   : F2
-3   : F3
-4   : F4
-5   : F5
-6   : F6
-7   : F7
-8   : F8
-9   : F9
-0   : F10
--   : F11
-+   : F12
+X         : Cut (Ctrl+X)
+C         : Copy (Ctrl+C)
+
+V         : Paste (Shift+Insert)
+T         : Type in clipboard text (can be used where text is not allowed to be pasted)
+
+Z         : Show/hide notifications when clipboard text changes
+`         : Show the remembered cliboard texts in NotePad++ 64-bit
+
+Q         : Reset clipboard to text copied earlier
+E         : Reset clipboard to text copied later
+
+BackSpace : forget all the remembered clipboard texts
+\         : Forget current clipboard text
 
 
-Q   : Volume down
-E   : Volume up
-
-G   : Volume mute
-Z   : Pause/play
-
-,   : Previous track
-.   : Next track
+U         : UnDo (Ctrl+Z)
+R         : ReDo (Ctrl+Y)
+F         : Find (Ctrl+F)
 
 
-U   : UnDo (Ctrl+Z)
-R   : ReDo (Ctrl+Y)
-F   : Find (Ctrl+F)
+;         : Do a left click
+'         : Opens context menu
 
-Y   : Save screenshot (Win+PrintScreen)
 
-Tab : Disable Alt+Tab functionality.
-'   : Switch case of selected text (capitalise 1st letters, all caps, all smalls, restore text)
+1         : F1
+2         : F2
+3         : F3
+4         : F4
+5         : F5
+6         : F6
+7         : F7
+8         : F8
+9         : F9
+0         : F10
+-         : F11
++         : F12
 
-[   : Project to PC screen only
-]   : Project to second screen only
+
+,         : Volume down
+Shift+,   : Previous track
+
+.         : Volume up
+Shift+.   : Next track
+
+/         : Volume mute
+Shift+/   : Pause/play
+
+
+[         : Project to PC screen only
+]         : Project to second screen only
+
+
+Y         : Save screenshot (Win+PrintScreen) at Pictures/Screenshots folder.
+Tab       : Disable Alt+Tab functionality.
 
 F1  : Show/hide help for each HotKey pressed.
 F4  : Exit the HotKeys app.

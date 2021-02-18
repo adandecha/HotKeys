@@ -48,6 +48,8 @@ KeepExistingCapsLockStateButToPermState()
 
 ShowTip(M_On_Load, C_On_Load, F_H_M_On_Load, True)
 
+ExpectedClipBoardUpdateTime := 200
+
 ClipStack := []
 Loop, Files, %A_Temp%\ClipText*.txt
 {
@@ -59,10 +61,6 @@ ClipCurrIdx := ClipStack.Count()
 OnExit ExitSub
 OnClipBoardChange("ClipBoardListener")
 DisableClipBoardMsgs := True
-; clip can be done well with mutex but still the core win clip
-; itself isn't sync api so need to wait ms even on c# so decided
-; to go with time based approach only
-; assumed 200ms would be enough for clip to be updated
 DisableClipBoardListener := False
 SetTimer, ClipBoardPopulate, -1
 
@@ -176,52 +174,52 @@ CapsLock & F1::
     ShowKey("Show Help Messages.")
     Return
 
-CapsLock & h::
-    Suspend, Permit
-*h::
-    SendInput {Blind}{Left}
-    ShowKey("Left")
-    Return
-CapsLock & j::
-    Suspend, Permit
-*j::
-    SendInput {Blind}{Down}
-    ShowKey("Down")
-    Return
-CapsLock & k::
-    Suspend, Permit
-*k::
-    SendInput {Blind}{Up}
-    ShowKey("Up")
-    Return
-CapsLock & l::
-    Suspend, Permit
-*l::
-    SendInput {Blind}{Right}
-    ShowKey("Right")
-    Return
-
-CapsLock & w::
-    Suspend, Permit
-*w::
-    SendInput {Blind}{PgUp}
-    ShowKey("Page Up")
-    Return
 CapsLock & a::
     Suspend, Permit
 *a::
-    SendInput {Blind}{Home}
-    ShowKey("Home")
+    SendInput {Blind}{Left}
+    ShowKey("Left")
     Return
 CapsLock & s::
     Suspend, Permit
 *s::
-    SendInput {Blind}{PgDn}
-    ShowKey("Page Down")
+    SendInput {Blind}{Down}
+    ShowKey("Down")
+    Return
+CapsLock & w::
+    Suspend, Permit
+*w::
+    SendInput {Blind}{Up}
+    ShowKey("Up")
     Return
 CapsLock & d::
     Suspend, Permit
 *d::
+    SendInput {Blind}{Right}
+    ShowKey("Right")
+    Return
+
+CapsLock & h::
+    Suspend, Permit
+*h::
+    SendInput {Blind}{Home}
+    ShowKey("Home")
+    Return
+CapsLock & j::
+    Suspend, Permit
+*j::
+    SendInput {Blind}{PgDn}
+    ShowKey("Page Down")
+    Return
+CapsLock & k::
+    Suspend, Permit
+*k::
+    SendInput {Blind}{PgUp}
+    ShowKey("Page Up")
+    Return
+CapsLock & l::
+    Suspend, Permit
+*l::
     SendInput {Blind}{End}
     ShowKey("End")
     Return
@@ -239,15 +237,15 @@ CapsLock & o::
     ShowKey("Delete")
     Return
 
-CapsLock & m::
+CapsLock & '::
     Suspend, Permit
-*m::
+*'::
     SendInput {AppsKey}
     ShowKey("Context Menu")
     Return
-CapsLock & p::
+CapsLock & `;::
     Suspend, Permit
-*p::
+`;::
     SendInput {Blind}{Click}
     ShowKey("Left Click")
     Return
@@ -298,43 +296,40 @@ CapsLock & f::
     ShowKey("Find")
     Return
 
-CapsLock & q::
-    Suspend, Permit
-*q::
-    SendInput {Volume_Down}
-    ShowKey("Volume Down")
-    Return
-CapsLock & e::
-    Suspend, Permit
-*e::
-    SendInput {Volume_Up}
-    ShowKey("Volume Up")
-    Return
-
-CapsLock & g::
-    Suspend, Permit
-*g::
-    SendInput {Volume_Mute}
-    ShowKey("Volume Mute")
-    Return
-CapsLock & z::
-    Suspend, Permit
-*z::
-    SendInput {Media_Play_Pause}
-    ShowKey("Media Play/Pause")
-    Return
-
 CapsLock & ,::
     Suspend, Permit
 *,::
-    SendInput {Media_Prev}
-    ShowKey("Media Previous")
+    If !GetKeyState("Shift") {
+        SendInput {Volume_Down}
+        ShowKey("Volume Down")
+    } Else {
+        SendInput {Media_Prev}
+        ShowKey("Media Previous")
+    }
     Return
+
 CapsLock & .::
     Suspend, Permit
 *.::
-    SendInput {Media_Next}
-    ShowKey("Media Next")
+    If !GetKeyState("Shift") {
+        SendInput {Volume_Up}
+        ShowKey("Volume Up")
+    } Else {
+        SendInput {Media_Next}
+        ShowKey("Media Next")
+    }
+    Return
+
+CapsLock & /::
+    Suspend, Permit
+*/::
+    If !GetKeyState("Shift") {
+        SendInput {Volume_Mute}
+        ShowKey("Volume Mute")
+    } Else {
+        SendInput {Media_Play_Pause}
+        ShowKey("Media Play/Pause")
+    }
     Return
 
 CapsLock & F5::
@@ -502,15 +497,16 @@ Tab::
         ShowKey("Alt+Tab Window Switching Is Disabled.")
     Return
 
+/*
 CapsLock & '::
     Suspend, Permit
 *'::
-    Global CaseChangeState, CaseChangeText
+    Global CaseChangeState, CaseChangeText, ExpectedClipBoardUpdateTime
     ShowKey("Capitalise Selected Text Cycling Through,`n1st Caps -> All Caps -> All Smalls -> Original.")
     If (CaseChangeState = "0") {
         ShowKey("Capitalise 1st Letters.")
         SendInput ^{Insert}
-        Sleep 200
+        Sleep ExpectedClipBoardUpdateTime
         CaseChangeText := ClipBoard
         If (StrLen(CaseChangeText) = 0)
             Return
@@ -534,6 +530,7 @@ CapsLock & '::
     SendInput {BackSpace %NBS%}+{Insert}
     SetTimer, ResetCaseChangeState, -7000
     Return
+*/
 
 ResetCaseChangeState:
     Global CaseChangeState, CaseChangeText
@@ -568,9 +565,9 @@ CapsLock & \::
     SetTimer, ClipBoardPopulate, -1
     Return
 
-CapsLock & b::
+CapsLock & q::
     Suspend, Permit
-*b::
+*q::
     Global ClipCurrIdx, ClipStack
     ShowKey("Set ClipBoard To Text Copied Earlier.")
     If (ClipCurrIdx = 0) {
@@ -579,15 +576,12 @@ CapsLock & b::
     ClipCurrIdx := (ClipCurrIdx = 1) ? ClipStack.Count() : (ClipCurrIdx - 1)
     i := SubStr("0000000000" . ClipCurrIdx, -9)
     ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
-    ; if next CL-b comes immediately then delay setting CB sync'ly
-    ; which in turn allows for tooltips updating faster
-    ; it assumes i can perform next CL-B or ^V or +Ins or Pasting under 600ms
     SetTimer, ClipBoardPopulate, -1
     Return
 
-CapsLock & n::
+CapsLock & e::
     Suspend, Permit
-*n::
+*e::
     Global ClipCurrIdx, ClipStack
     ShowKey("Set ClipBoard To Text Copied Later.")
     If (ClipCurrIdx = 0) {
@@ -599,9 +593,9 @@ CapsLock & n::
     SetTimer, ClipBoardPopulate, -1
     Return
 
-CapsLock & /::
+CapsLock & z::
     Suspend, Permit
-*/::
+*z::
     Global ClipCurrIdx, ClipStack, DisableClipBoardMsgs
     ShowKey((DisableClipBoardMsgs ? "Show" : "Hide") " Notifications For ClipBoard Changes.")
     DisableClipBoardMsgs := !DisableClipBoardMsgs
@@ -660,7 +654,7 @@ SaveClipBoardHistoryOnDisk() {
     FileDelete, %A_Temp%\ClipText*.txt
     If (ClipCurrIdx = 0) {
         ShowTipClipBoard("No ClipTexts To Save On The Disk!")
-        Return
+        Return False
     }
     SetFormat, Float, 06.0
     Loop % ClipStack.Count()
@@ -669,13 +663,29 @@ SaveClipBoardHistoryOnDisk() {
         FileAppend, % ClipStack[A_Index], %A_Temp%\ClipText%i%.txt
     }
     ShowTipClipBoard("Saved ClipText(s) At,`n" A_Temp "\ClipTextXXXXXXXXXX.txt File(s).")
+    Return True
 }
 
 ClipBoardPutSync(ByRef text) {
-    Global DisableClipBoardListener
+    Global DisableClipBoardListener, ExpectedClipBoardUpdateTime
     DisableClipBoardListener := True
     ClipBoard := text
-    Sleep 200 ; VVIMP: assuming 200 ms would be enough for ClipBoard updation to go through
+    Sleep %ExpectedClipBoardUpdateTime%
     DisableClipBoardListener := False
+}
+
+CapsLock & `::
+    Suspend, Permit
+*`::
+    ShowKey("Show The Remembered CliBoard Texts In NotePad++.")
+    If !SaveClipBoardHistoryOnDisk()
+        Return
+    SetTimer, LaunchClipTextsInNotePadPP, -500
+    Return
+
+LaunchClipTextsInNotePadPP() {
+    Global ClipCurrIdx
+    I := SubStr("0000000000" . ClipCurrIdx, -9)
+    Run, "C:\Program Files\Notepad++\notepad++.exe" "-multiInst" "-nosession" "%A_Temp%\ClipText*.txt" "%A_Temp%\ClipText%I%.txt"
 }
 
