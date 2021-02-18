@@ -66,7 +66,28 @@ SetTimer, ClipBoardPopulate, -1
 
 Suspend, On
 
+FuncOfW := "DoPageUp"
+FuncOfA := "DoHome"
+FuncOfS := "DoPageDown"
+FuncOfD := "DoEnd"
+FuncOfH := "DoLeft"
+FuncOfJ := "DoDown"
+FuncOfK := "DoUp"
+FuncOfL := "DoRight"
+
 Return
+
+SwapFuncOfMovementKeys() {
+    Global FuncOfW, FuncOfA, FuncOfS, FuncOfD, FuncOfH, FuncOfJ, FuncOfK, FuncOfL
+    FuncOfW := FuncOfW == "DoPageUp" ? "DoUp" : "DoPageUp"
+    FuncOfA := FuncOfA == "DoHome" ? "DoLeft" : "DoHome"
+    FuncOfS := FuncOfS == "DoPageDown" ? "DoDown" : "DoPageDown"
+    FuncOfD := FuncOfD == "DoEnd" ? "DoRight" : "DoEnd"
+    FuncOfH := FuncOfH == "DoLeft" ? "DoHome" : "DoLeft"
+    FuncOfJ := FuncOfJ == "DoDown" ? "DoPageDown" : "DoDown"
+    FuncOfK := FuncOfK == "DoUp" ? "DoPageUp" : "DoUp"
+    FuncOfL := FuncOfL == "DoRight" ? "DoEnd" : "DoRight"
+}
 
 ShowTipArbitrary(ByRef Msg, ByRef VisibilityTimePeriod := 1000) {
     Global C_M_Arbitrary, F_H_M_Arbitrary
@@ -174,55 +195,101 @@ CapsLock & F1::
     ShowKey("Show Help Messages.")
     Return
 
-CapsLock & a::
-    Suspend, Permit
-*a::
-    SendInput {Blind}{Left}
-    ShowKey("Left")
-    Return
-CapsLock & s::
-    Suspend, Permit
-*s::
-    SendInput {Blind}{Down}
-    ShowKey("Down")
-    Return
-CapsLock & w::
-    Suspend, Permit
-*w::
-    SendInput {Blind}{Up}
-    ShowKey("Up")
-    Return
-CapsLock & d::
-    Suspend, Permit
-*d::
-    SendInput {Blind}{Right}
-    ShowKey("Right")
-    Return
-
 CapsLock & h::
     Suspend, Permit
 *h::
-    SendInput {Blind}{Home}
-    ShowKey("Home")
+    %FuncOfH%()
     Return
+
+DoLeft() {
+    SendInput {Blind}{Left}
+    ShowKey("Left")
+    Return
+}
+
 CapsLock & j::
     Suspend, Permit
 *j::
-    SendInput {Blind}{PgDn}
-    ShowKey("Page Down")
+    %FuncOfJ%()
     Return
+
+DoDown() {
+    SendInput {Blind}{Down}
+    ShowKey("Down")
+    Return
+}
+
 CapsLock & k::
     Suspend, Permit
 *k::
-    SendInput {Blind}{PgUp}
-    ShowKey("Page Up")
+    %FuncOfK%()
     Return
+
+DoUp() {
+    SendInput {Blind}{Up}
+    ShowKey("Up")
+    Return
+}
+
 CapsLock & l::
     Suspend, Permit
 *l::
+    %FuncOfL%()
+    Return
+
+DoRight() {
+    SendInput {Blind}{Right}
+    ShowKey("Right")
+    Return
+}
+
+CapsLock & a::
+    Suspend, Permit
+*a::
+    %FuncOfA%()
+    Return
+
+DoHome() {
+    SendInput {Blind}{Home}
+    ShowKey("Home")
+    Return
+}
+
+CapsLock & s::
+    Suspend, Permit
+*s::
+    %FuncOfS%()
+    Return
+
+DoPageDown() {
+    SendInput {Blind}{PgDn}
+    ShowKey("Page Down")
+    Return
+}
+
+CapsLock & w::
+    Suspend, Permit
+*w::
+    %FuncOfW%()
+    Return
+
+DoPageUp() {
+    SendInput {Blind}{PgUp}
+    ShowKey("Page Up")
+    Return
+}
+
+CapsLock & d::
+    Suspend, Permit
+*d::
+    %FuncOfD%()
+    Return
+
+DoEnd() {
     SendInput {Blind}{End}
     ShowKey("End")
     Return
+}
 
 CapsLock & i::
     Suspend, Permit
@@ -688,4 +755,10 @@ LaunchClipTextsInNotePadPP() {
     I := SubStr("0000000000" . ClipCurrIdx, -9)
     Run, "C:\Program Files\Notepad++\notepad++.exe" "-multiInst" "-nosession" "%A_Temp%\ClipText*.txt" "%A_Temp%\ClipText%I%.txt"
 }
+
+CapsLock & m::
+    Suspend, Permit
+*m::
+    SwapFuncOfMovementKeys()
+    Return
 

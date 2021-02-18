@@ -35,20 +35,23 @@ Following is the list of HotKeys when used in conjuction with CapsLock or after 
 Left is what's pressed, and right is what it results into.
 
 
-A         : Left
-D         : Right
+A         : Left        : H
+D         : Right       : L
 
-W         : Up
-S         : Down
+W         : Up          : K
+S         : Down        : J
+
+H         : Home        : A
+L         : End         : D
+
+J         : PageDown    : S
+K         : PageUp      : W
+
+M         : Swap functionalities of movement keys WASD with KHJL
+
 
 I         : Backspace
 O         : Delete
-
-H         : Home
-L         : End
-
-K         : PageUp
-J         : PageDown
 
 
 X         : Cut (Ctrl+X)
