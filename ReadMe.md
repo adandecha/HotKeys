@@ -112,7 +112,18 @@ Tab       : Disable Alt+Tab functionality.
 
 F1  : Show/hide help for each HotKey pressed.
 F4  : Exit the HotKeys app.
+F12 : Clean restart the HotKeys app forgetting all config except clipboard history.
 
+```
+
+To give a consistent experience across restarts, some settings are saved on the disk,
+in a similarly named .ini file where the script is located.
+It remembers following things,
+```
+01. Alt+Tab is to be allowed or not.
+02. WASD are arrow keys or HJKL are.
+03. What text was on the clipboard among many remembered.
+04. Notifications are to be displayed or not.
 ```
 
 **Also,**

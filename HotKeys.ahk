@@ -15,6 +15,9 @@ If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 #SingleInstance, Force
 Coordmode, ToolTip, Screen
 
+CfgPath := A_ScriptFullPath ".ini"
+RmConfigOnExit := False
+
 M_On_Load := "HotKeys Loaded"
 M_Enabled := "Hotkeys Enabled"
 M_Disabled := "Hotkeys Disabled"
@@ -35,11 +38,11 @@ F_H_M_Key_Press := Func("HideTip").Bind(C_Key_Press)
 F_H_M_Arbitrary := Func("HideTip").Bind(C_M_Arbitrary)
 F_H_M_ClipBoard := Func("HideTip").Bind(C_M_ClipBoard)
 
-ShowKeysOn := False
+IniRead, ShowKeysOn, %CfgPath%, Globals, ShowKeysOn, % False
 
 LogKeyPresses := False
 
-AltTab := True
+IniRead, AltTab, %CfgPath%, Globals, AltTab, % True
 
 CaseChangeState := 0
 CaseChangeText := ""
@@ -57,36 +60,55 @@ Loop, Files, %A_Temp%\ClipText*.txt
     ClipStack.Push(ClipText)
     FileDelete, %A_LoopFileFullPath%
 }
-ClipCurrIdx := ClipStack.Count()
+IniRead, ClipCurrIdx, %CfgPath%, Globals, ClipCurrIdx, % ClipStack.Count()
 OnExit ExitSub
 OnClipBoardChange("ClipBoardListener")
-DisableClipBoardMsgs := True
+IniRead, DisableClipBoardMsgs, %CfgPath%, Globals, DisableClipBoardMsgs, % True
 DisableClipBoardListener := False
 SetTimer, ClipBoardPopulate, -1
 
-Suspend, On
+; Command params do store quotes if used around literal strings of arguments
+; you have to force and expr evaluation if wanted just like around %CfgPath%
+IniRead, FuncOfW, %CfgPath%, Globals, FuncOfW, DoUp
+; need to force use parentheses around comparision exact format isdu
+; need to use var w/o %% on LHS and quotes around DoUp as it has become an expr
+; read explanation01 which is about using quotes in an expr
+SetWASDHJKL((FuncOfW == "DoUp"))
 
-FuncOfW := "DoPageUp"
-FuncOfA := "DoHome"
-FuncOfS := "DoPageDown"
-FuncOfD := "DoEnd"
-FuncOfH := "DoLeft"
-FuncOfJ := "DoDown"
-FuncOfK := "DoUp"
-FuncOfL := "DoRight"
+Suspend, On
 
 Return
 
 SwapFuncOfMovementKeys() {
+    Global FuncOfW
+    SetWASDHJKL((FuncOfW != "DoUp"))
+}
+
+SetWASDHJKL(FuncOfW_Is_To_DoUp) {
     Global FuncOfW, FuncOfA, FuncOfS, FuncOfD, FuncOfH, FuncOfJ, FuncOfK, FuncOfL
-    FuncOfW := FuncOfW == "DoPageUp" ? "DoUp" : "DoPageUp"
-    FuncOfA := FuncOfA == "DoHome" ? "DoLeft" : "DoHome"
-    FuncOfS := FuncOfS == "DoPageDown" ? "DoDown" : "DoPageDown"
-    FuncOfD := FuncOfD == "DoEnd" ? "DoRight" : "DoEnd"
-    FuncOfH := FuncOfH == "DoLeft" ? "DoHome" : "DoLeft"
-    FuncOfJ := FuncOfJ == "DoDown" ? "DoPageDown" : "DoDown"
-    FuncOfK := FuncOfK == "DoUp" ? "DoPageUp" : "DoUp"
-    FuncOfL := FuncOfL == "DoRight" ? "DoEnd" : "DoRight"
+    If (FuncOfW_Is_To_DoUp) {
+        ; explanation01
+        ; := RHS considered expr and evaluated so if "DoUp" don't have quotes around it
+        ; DoUp would be evaluated to be 1st use of a var not declared before and thus
+        ; it's value would be "" and thus FuncOfW would store "" in it
+        FuncOfW := "DoUp"
+        FuncOfA := "DoLeft"
+        FuncOfS := "DoDown"
+        FuncOfD := "DoRight"
+        FuncOfH := "DoHome"
+        FuncOfJ := "DoPageDown"
+        FuncOfK := "DoPageUp"
+        FuncOfL := "DoEnd"
+    } Else {
+        FuncOfW := "DoPageUp"
+        FuncOfA := "DoHome"
+        FuncOfS := "DoPageDown"
+        FuncOfD := "DoEnd"
+        FuncOfH := "DoLeft"
+        FuncOfJ := "DoDown"
+        FuncOfK := "DoUp"
+        FuncOfL := "DoRight"
+    }
 }
 
 ShowTipArbitrary(ByRef Msg, ByRef VisibilityTimePeriod := 1000) {
@@ -539,7 +561,8 @@ RCtrl::
     If (A_IsSuspended) {
         ShowTip(M_Disabled, C_HK_Toggle, F_H_M_HK_Toggle, True)
     } else {
-        ShowTip(M_Enabled, C_HK_Toggle, F_H_M_HK_Toggle, False)
+        ; ContinuouslyPopUpHotKeysEnabledMsg := Func("ShowTip").Bind(M_Enabled, C_HK_Toggle, F_H_M_HK_Toggle, False)
+        ; SetTimer, % ContinuouslyPopUpHotKeysEnabledMsg, 500
         OverlayCapsLockStatusMessage()
     }
     Return
@@ -622,7 +645,7 @@ CapsLock & \::
 *\::
     Global ClipCurrIdx, ClipStack
     ShowKey("Forget Current ClipBoard Text From History.")
-    If (ClipCurrIdx = 0) {
+    If (ClipCurrIdx = "0") {
         Return
     }
     i := SubStr("0000000000" . ClipCurrIdx, -9)
@@ -637,10 +660,10 @@ CapsLock & q::
 *q::
     Global ClipCurrIdx, ClipStack
     ShowKey("Set ClipBoard To Text Copied Earlier.")
-    If (ClipCurrIdx = 0) {
+    If (ClipCurrIdx = "0") {
         Return
     }
-    ClipCurrIdx := (ClipCurrIdx = 1) ? ClipStack.Count() : (ClipCurrIdx - 1)
+    ClipCurrIdx := ClipCurrIdx == "1" ? ClipStack.Count() : (ClipCurrIdx - 1)
     i := SubStr("0000000000" . ClipCurrIdx, -9)
     ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
     SetTimer, ClipBoardPopulate, -1
@@ -651,7 +674,7 @@ CapsLock & e::
 *e::
     Global ClipCurrIdx, ClipStack
     ShowKey("Set ClipBoard To Text Copied Later.")
-    If (ClipCurrIdx = 0) {
+    If (ClipCurrIdx = "0") {
         Return
     }
     ClipCurrIdx := ClipCurrIdx == ClipStack.Count() ? 1 : (ClipCurrIdx + 1)
@@ -667,7 +690,7 @@ CapsLock & z::
     ShowKey((DisableClipBoardMsgs ? "Show" : "Hide") " Notifications For ClipBoard Changes.")
     DisableClipBoardMsgs := !DisableClipBoardMsgs
     Msg := "ClipBoard Notifications " (DisableClipBoardMsgs ? "Disabled." : "Enabled.")
-    If (ClipCurrIdx = 0) {
+    If (ClipCurrIdx = "0") {
         ShowTipArbitrary(Msg "`nClipBoard Text History Empty.")
     } Else {
         i := SubStr("0000000000" . ClipCurrIdx, -9)
@@ -678,7 +701,7 @@ CapsLock & z::
 
 ClipBoardPopulate() {
     Global ClipCurrIdx, ClipStack
-    If (ClipCurrIdx == 0)
+    If (ClipCurrIdx == "0")
         ClipBoardPutSync("")
     Else
         ClipBoardPutSync(ClipStack[ClipCurrIdx])
@@ -691,13 +714,13 @@ ClipBoardListener(ClipContentType) {
         Return
     }
     ClipText := ClipBoard
-    If (ClipContentType != 1 or ClipText == "") {
+    If (ClipContentType != "1" or ClipText == "") {
         ; ShowTipClipBoard(A_LineNumber ": Empty or non-text ClipBoard.`n" )
         Return
     }
     Loop % ClipStack.Count()
     {
-        if (ClipText == ClipStack[A_Index]) {
+        If (ClipText == ClipStack[A_Index]) {
             i := SubStr("0000000000" . A_Index, -9)
             ; ShowTipClipBoard(A_LineNumber ": ClipText Already Present.`n" "ClipText#" i ":`n" ClipText)
             ShowTipClipBoard("ClipText Already Present.`n" "ClipText#" i ":`n" ClipText)
@@ -713,13 +736,24 @@ ClipBoardListener(ClipContentType) {
 
 ExitSub:
     Suspend, Permit
-    SaveClipBoardHistoryOnDisk()
+    Global FuncOfW, DisableClipBoardMsgs, ClipCurrIdx, ShowKeysOn, AltTab, RmConfigOnExit
+    If (RmConfigOnExit) {
+        FileDelete, %CfgPath%
+        FileDelete, %A_Temp%\ClipText*.txt
+    } Else {
+        SaveClipBoardHistoryOnDisk()
+        IniWrite, %FuncOfW%, %CfgPath%, Globals, FuncOfW
+        IniWrite, %DisableClipBoardMsgs%, %CfgPath%, Globals, DisableClipBoardMsgs
+        IniWrite, %ClipCurrIdx%, %CfgPath%, Globals, ClipCurrIdx
+        IniWrite, %ShowKeysOn%, %CfgPath%, Globals, ShowKeysOn
+        IniWrite, %AltTab%, %CfgPath%, Globals, AltTab
+    }
     ExitApp
 
 SaveClipBoardHistoryOnDisk() {
     Global ClipCurrIdx, ClipStack
     FileDelete, %A_Temp%\ClipText*.txt
-    If (ClipCurrIdx = 0) {
+    If (ClipCurrIdx = "0") {
         ShowTipClipBoard("No ClipTexts To Save On The Disk!")
         Return False
     }
@@ -760,5 +794,14 @@ CapsLock & m::
     Suspend, Permit
 *m::
     SwapFuncOfMovementKeys()
+    ShowKey((%FuncOfW% == DoUp ? "WASD" : "HJKL") " Are Now The Arrow Keys")
+    Return
+
+CapsLock & F12::
+    Suspend, Permit
+*Delete::
+    Global RmConfigOnExit
+    RmConfigOnExit := True
+    Reload
     Return
 
