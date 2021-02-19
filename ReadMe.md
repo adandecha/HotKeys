@@ -106,13 +106,17 @@ Shift+/   : Pause/play
 [         : Project to PC screen only
 ]         : Project to second screen only
 
+Y         : Save screenshot (Win+PrintScreen) on the disk
+Alt-Y     : Show screenshot in explorer
+Ctrl-Y    : Copy screenshot's full path
 
-Y         : Save screenshot (Win+PrintScreen) at Pictures/Screenshots folder.
-Tab       : Disable Alt+Tab functionality.
+Tab       : Disable Alt+Tab functionality
 
-F1  : Show/hide help for each HotKey pressed.
-F4  : Exit the HotKeys app.
-F12 : Clean restart the HotKeys app forgetting all config except clipboard history.
+N         : Show/hide the last notification that HotKeys gave
+
+F1        : Show/hide help for each HotKey pressed
+F4        : Exit the HotKeys app
+F12       : Clean restart the HotKeys app forgetting all config except clipboard history
 
 ```
 

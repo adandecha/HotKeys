@@ -18,6 +18,9 @@ Coordmode, ToolTip, Screen
 CfgPath := A_ScriptFullPath ".ini"
 RmConfigOnExit := False
 
+RegRead, ScreenshotsDir, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders, {B7BEDE81-DF94-4682-A7D8-57A52620B86F}, % UserProfile "\Pictures\Screenshots"
+ScreenshotsDir := ComObjCreate("WScript.Shell").Exec("cmd.exe /q /c <nul set /p=" ScreenshotsDir).StdOut.ReadAll() 
+
 M_On_Load := "HotKeys Loaded"
 M_Enabled := "Hotkeys Enabled"
 M_Disabled := "Hotkeys Disabled"
@@ -30,6 +33,9 @@ C_HK_Toggle := 3
 C_Key_Press := 4
 C_M_Arbitrary := 5
 C_M_ClipBoard := 6
+C_M_LastToolTip := 7
+
+ShowLastNotif := True
 
 F_H_M_On_Load := Func("HideTip").Bind(C_On_Load)
 F_H_M_Caps_Toggle := Func("HideTip").Bind(C_Caps_Toggle)
@@ -132,7 +138,10 @@ HideTip(ByRef Id) {
     Return
 }
 
-ShowTip(ByRef Text, ByRef ConstId, ByRef HiderFunc, ByRef ShowTemporarily, ByRef VisibilityTimePeriod := 1000) {
+ShowTip(ByRef Text, ByRef ConstId, ByRef HiderFunc, ByRef ShowTemporarily, ByRef VisibilityTimePeriod := 2000) {
+    Global LastToolTipText
+    LastToolTipText := Text
+
     ToolTip, % Text, 0, 0, % ConstId
 
     If (ShowTemporarily)
@@ -546,9 +555,24 @@ Esc::
 CapsLock & y::
     Suspend, Permit
 *y::
-    SendInput #{PrintScreen}
-    F_SK := Func("ShowKey").Bind("Saved ScreenShot At " RegExReplace(UserProfile, "\\", "/") "/Pictures/Screenshots.")
-    SetTimer, % F_SK, -500
+    Global ScreenshotsDir
+    RegRead, Idx, HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer, ScreenshotIndex, "02"
+    Idx--
+    ScreenShotFilePath := ScreenshotsDir "\Screenshot (" Idx ").png"
+    If GetKeyState("Alt") {
+        ShowKey("Show ScreenShot In Explorer.")
+        RunString := "explorer /select, " ScreenShotFilePath
+        Run, % RunString
+    } Else If GetKeyState("Ctrl") {
+        ShowKey("Copy ScreenShot FilePath On The ClipBoard.")
+        RegRead, Idx, HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer, ScreenshotIndex, "02"
+        Idx--
+        ClipBoard := ScreenShotFilePath
+    } Else {
+        SendInput #{PrintScreen}
+        F_SK := Func("ShowKey").Bind("Saved ScreenShot At " ScreenShotFilePath ".`nPress CapsLock-Alt-Y To See It.`nPress CapsLock-Ctrl-Y To Copy It's FilePath.")
+        SetTimer, % F_SK, -1
+    }
     Return
 
 CapsLock::
@@ -794,14 +818,27 @@ CapsLock & m::
     Suspend, Permit
 *m::
     SwapFuncOfMovementKeys()
-    ShowKey((%FuncOfW% == DoUp ? "WASD" : "HJKL") " Are Now The Arrow Keys")
+    ShowKey((FuncOfW == "DoUp" ? "WASD" : "HJKL") " Are Now The Arrow Keys")
     Return
 
 CapsLock & F12::
     Suspend, Permit
-*Delete::
+*F12::
     Global RmConfigOnExit
     RmConfigOnExit := True
     Reload
     Return
 
+CapsLock & N::
+    Suspend, Permit
+*N::
+    Global ShowLastNotif, LastToolTipText, C_M_LastToolTip
+    If (ShowLastNotif) {
+        ShowLastNotif := False
+        ToolTip, % LastToolTipText, 0, 0, % C_M_LastToolTip
+    } Else {
+        ShowLastNotif := True
+        ToolTip, , , , % C_M_LastToolTip
+    }
+    Return
+    
