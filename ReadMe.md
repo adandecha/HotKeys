@@ -26,26 +26,26 @@ Done!
 
 ```
 CapsLock can be used as the modifier key to the HotKeys.
-For example, to generate the Home key, one can hit - CapsLock+A - keep CapsLock pressed and hit A.
+For example, to generate the BackSpace key, one can hit - CapsLock+I.
 
-RCtrl can used to toggle the HotKeys on or off.
-For example, to generate the same Home key, one can also press keys - RCtrl A RCtrl.
+RCtrl can also be used to toggle the HotKeys on or off.
+For example, to generate the same BackSpace key, one can also press keys - RCtrl I RCtrl.
 
 Following is the list of HotKeys when used in conjuction with CapsLock or after RCtrl.
 Left is what's pressed, and right is what it results into.
 
 
-A         : Left        : H
-D         : Right       : L
+A         : Left
+D         : Right
 
-W         : Up          : K
-S         : Down        : J
+W         : Up
+S         : Down
 
-H         : Home        : A
-L         : End         : D
+H         : Home
+L         : End
 
-J         : PageDown    : S
-K         : PageUp      : W
+J         : PageDown
+K         : PageUp
 
 M         : Swap functionalities of movement keys WASD with KHJL
 
@@ -141,6 +141,9 @@ One can remap ~~LCtrl~~->_LWin_, ~~LWin~~->_LCtrl_, and ~~RAlt~~->_RWin_, by run
 It can be restored by running,
 <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Restore_LC_LW_RA.reg](Restore_LC_LW_RA.reg), and restarting Windows.
+<br/>
+<br/>
+For the first time users, I've got some suggestions [here](Suggestions.md)!
 <br/>
 <br/>
 **Enjoy!**
