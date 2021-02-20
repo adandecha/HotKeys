@@ -19,7 +19,7 @@ CfgPath := A_ScriptFullPath ".ini"
 RmConfigOnExit := False
 
 RegRead, ScreenshotsDir, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders, {B7BEDE81-DF94-4682-A7D8-57A52620B86F}, % UserProfile "\Pictures\Screenshots"
-ScreenshotsDir := ComObjCreate("WScript.Shell").Exec("cmd.exe /q /c <nul set /p=" ScreenshotsDir).StdOut.ReadAll() 
+ScreenshotsDir := ComObjCreate("WScript.Shell").Exec("cmd.exe /q /c <nul set /p=" ScreenshotsDir).StdOut.ReadAll()
 
 M_On_Load := "HotKeys Loaded"
 M_Enabled := "Hotkeys Enabled"
@@ -36,6 +36,10 @@ C_M_ClipBoard := 6
 C_M_LastToolTip := 7
 
 ShowLastNotif := True
+IniRead, ToolTipCoOrdX, %CfgPath%, Globals, ToolTipCoOrdX, 0
+IniRead, ToolTipCoOrdY, %CfgPath%, Globals, ToolTipCoOrdY, 0
+LastShowTipCall := ""
+LastToolTipText := ""
 
 F_H_M_On_Load := Func("HideTip").Bind(C_On_Load)
 F_H_M_Caps_Toggle := Func("HideTip").Bind(C_Caps_Toggle)
@@ -138,11 +142,13 @@ HideTip(ByRef Id) {
     Return
 }
 
-ShowTip(ByRef Text, ByRef ConstId, ByRef HiderFunc, ByRef ShowTemporarily, ByRef VisibilityTimePeriod := 2000) {
-    Global LastToolTipText
+ShowTip(ByRef Text, ByRef ConstID, ByRef HiderFunc, ByRef ShowTemporarily, ByRef VisibilityTimePeriod := 2000) {
+    Global LastToolTipText, LastShowTipCall
+    Global ToolTipCoOrdX, ToolTipCoOrdY
     LastToolTipText := Text
+    LastShowTipCall := Func("ShowTip").Bind(Text, ConstID, HiderFunc, ShowTemporarily, VisibilityTimePeriod)
 
-    ToolTip, % Text, 0, 0, % ConstId
+    ToolTip, % Text, % ToolTipCoOrdX, % ToolTipCoOrdY, % ConstID
 
     If (ShowTemporarily)
         SetTimer, % HiderFunc, -%VisibilityTimePeriod%
@@ -771,6 +777,8 @@ ExitSub:
         IniWrite, %ClipCurrIdx%, %CfgPath%, Globals, ClipCurrIdx
         IniWrite, %ShowKeysOn%, %CfgPath%, Globals, ShowKeysOn
         IniWrite, %AltTab%, %CfgPath%, Globals, AltTab
+        IniWrite, %ToolTipCoOrdX%, %CfgPath%, Globals, ToolTipCoOrdX
+        IniWrite, %ToolTipCoOrdY%, %CfgPath%, Globals, ToolTipCoOrdY
     }
     ExitApp
 
@@ -833,12 +841,48 @@ CapsLock & N::
     Suspend, Permit
 *N::
     Global ShowLastNotif, LastToolTipText, C_M_LastToolTip
+    Global ToolTipCoOrdX, ToolTipCoOrdY
     If (ShowLastNotif) {
         ShowLastNotif := False
-        ToolTip, % LastToolTipText, 0, 0, % C_M_LastToolTip
+        ToolTip, % LastToolTipText, % ToolTipCoOrdX, % ToolTipCoOrdY, % C_M_LastToolTip
     } Else {
         ShowLastNotif := True
         ToolTip, , , , % C_M_LastToolTip
     }
     Return
-    
+
+CapsLock & P::
+    Suspend, Permit
+*P::
+    Global ToolTipCoOrdX, ToolTipCoOrdY, LastShowTipCall
+    If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = 0) {
+        ToolTipCoOrdX := A_ScreenWidth
+        ToolTipCoOrdY := 0
+    } Else
+    If (ToolTipCoOrdX = A_ScreenWidth  && ToolTipCoOrdY = 0) {
+        ToolTipCoOrdX := A_ScreenWidth
+        ToolTipCoOrdY := A_ScreenHeight
+    } Else
+    If (ToolTipCoOrdX = A_ScreenWidth && ToolTipCoOrdY = A_ScreenHeight) {
+        ToolTipCoOrdX := 0
+        ToolTipCoOrdY := A_ScreenHeight
+    } Else
+    If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = A_ScreenHeight) {
+        ToolTipCoOrdX := A_ScreenWidth / 2
+        ToolTipCoOrdY := A_ScreenHeight / 2
+    } Else
+    If (ToolTipCoOrdX = A_ScreenWidth / 2 && ToolTipCoOrdY = A_ScreenHeight / 2) {
+        CoordMode, Mouse, Screen
+        MouseGetPos X, Y
+        ToolTipCoOrdX := X
+        ToolTipCoOrdY := Y
+    } Else {
+        ToolTipCoOrdX := 0
+        ToolTipCoOrdY := 0
+    }
+    ; hide CL-N notif
+    ToolTip, , , , % C_M_LastToolTip
+    ; re-show CL-F1 or CL-Z notifs
+    LastShowTipCall.Call()
+    Return
+
