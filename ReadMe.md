@@ -2,16 +2,15 @@ Shorten traveling the keyboard to a measly 60%!
 
 This is an AutoHotKey script to bind some very useful CapsLock hotkeys to the keyboard.
 
-To have a look and feel, an already compiled executable can be found **[here](https://drive.google.com/open?id=1l-_ly_VcWkBHzeugyiI1za9_tW2-sLh9)**.
+To have a look-see, download and run **[this](https://drive.google.com/u/0/uc?id=1-EpnR58gtZGFPAkmo97CUER857YFSxMp&export=download)**.
 <br/>
-To build/compile it manually please read through the following.
+To compile it manually, please read through the following.
 
 **Setting things up:**
 
-Download and install AutoHotKey from,
+Install [Git](https://git-scm.com/download/win), [AutoHotkey](https://autohotkey.com/download/), and [Notepad++](https://notepad-plus-plus.org/downloads/).
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[autohotkey.com](https://www.autohotkey.com)
-<br/>
+Download and extract [this](https://github.com/adandecha/HotKeys/archive/map2.zip).
 <br/>
 Run [Install.bat](Install.bat) as Admin.
 <br/>
@@ -28,96 +27,123 @@ Done!
 CapsLock can be used as the modifier key to the HotKeys.
 For example, to generate the BackSpace key, one can hit - CapsLock+I.
 
-RCtrl can also be used to toggle the HotKeys on or off.
-For example, to generate the same BackSpace key, one can also press keys - RCtrl I RCtrl.
-
-Following is the list of HotKeys when used in conjuction with CapsLock or after RCtrl.
-Left is what's pressed, and right is what it results into.
+Following are all the HotKeys that can be used holding down CapsLock.
+On the left is what's pressed, and on the right is what it results into.
 
 
-A         : Left
-D         : Right
+Movement Keys:
+-------- ----
 
-W         : Up
-S         : Down
+A|H              : Left
+D|L              : Right
 
-H         : Home
-L         : End
+W|K              : Up
+S|J              : Down
 
-J         : PageDown
-K         : PageUp
+H|A              : Home
+L|D              : End
 
-M         : Swap functionalities of movement keys WASD with KHJL
+J|S              : PageDown
+K|W              : PageUp
 
+M                : Swap functionalities of movement keys WASD with KHJL
 
-I         : Backspace
-O         : Delete
-
-
-X         : Cut (Ctrl+X)
-C         : Copy (Ctrl+C)
-
-V         : Paste (Shift+Insert)
-T         : Type in clipboard text (can be used where text is not allowed to be pasted)
-
-Z         : Show/hide notifications when clipboard text changes
-`         : Show the remembered cliboard texts in NotePad++ 64-bit
-
-Q         : Reset clipboard to text copied earlier
-E         : Reset clipboard to text copied later
-
-BackSpace : forget all the remembered clipboard texts
-\         : Forget current clipboard text
+I                : Backspace
+O                : Delete
 
 
-U         : UnDo (Ctrl+Z)
-R         : ReDo (Ctrl+Y)
-F         : Find (Ctrl+F)
+ClipBoard Management Keys:
+--------- ----------  ----
+
+X                : Cut (Ctrl+X)
+C                : Copy (Ctrl+C)
+
+Q|ScrollDown     : Reset clipboard to text copied earlier
+E|ScrollUp       : Reset clipboard to text copied later
+
+V|LeftClick      : Pastes clipboard text (Performs, Shift+Insert)
+Alt+LeftClick    : Single click and paste clipboard text (Performs, LeftCLick Shift+Insert)
+Ctrl+LeftClick   : Double click and paste clipboard text (Performs, LeftCLick LeftCLick Shift+Insert)
+Shift+LeftClick  : Select all text and paste clipboard text (Performs, Ctrl+Home ShiftDown Ctrl+End ShiftUp Shift+Insert)
+
+T|RightClick     : Types in clipboard text (can be used where text is not allowed to be pasted)
+Alt+LeftClick    : Single click and type in clipboard text (Before typing, it performs, LeftCLick)
+Ctrl+LeftClick   : Double click and type in clipboard text (Before typing, it performs, LeftCLick LeftCLick)
+Shift+LeftClick  : Select all and type in clipboard text (Before typing, it performs, Ctrl+Home ShiftDown Ctrl+End ShiftUp)
+
+Z                : Show notifications when clipboard text changes
+`                : Show the remembered cliboard texts in NotePad++ 64-bit
+
+BackSpace        : Forget all the remembered clipboard texts
+\                : Forget current clipboard text
 
 
-;         : Do a left click
-'         : Opens context menu
+Function Keys:
+-------- ----
+
+1                : F1
+2                : F2
+3                : F3
+4                : F4
+5                : F5
+6                : F6
+7                : F7
+8                : F8
+9                : F9
+0                : F10
+-                : F11
++                : F12
 
 
-1         : F1
-2         : F2
-3         : F3
-4         : F4
-5         : F5
-6         : F6
-7         : F7
-8         : F8
-9         : F9
-0         : F10
--         : F11
-+         : F12
+Media Keys:
+----- ----
+
+,                : Volume down
+.                : Volume up
+/                : Volume mute
+
+Shift+,          : Previous track
+Shift+.          : Next track
+Shift+/          : Pause/play
 
 
-,         : Volume down
-.         : Volume up
-/         : Volume mute
+Misc. Keys:
+----  ----
 
-Shift+,   : Previous track
-Shift+.   : Next track
-Shift+/   : Pause/play
+[                : Project to PC screen only
+]                : Project to second screen only
+
+Y                : Save screenshot (Win+PrintScreen) on the disk
+Alt-Y            : Show screenshot in explorer
+Ctrl-Y           : Copy screenshot's full path
+
+Tab              : Disable Alt+Tab functionality
+
+U                : UnDo (Ctrl+Z)
+R                : ReDo (Ctrl+Y)
+F                : Find (Ctrl+F)
+
+;                : Do a left click
+'                : Opens context menu
 
 
-[         : Project to PC screen only
-]         : Project to second screen only
+Notification Management Keys:
+------------ ---------- ----
 
-Y         : Save screenshot (Win+PrintScreen) on the disk
-Alt-Y     : Show screenshot in explorer
-Ctrl-Y    : Copy screenshot's full path
+N                : Show the last notification that HotKeys gave
+P                : Cycle showing notifications from top left, to top right, bottom right,
+                   bottom left, and at the mouse pointer; go to all corners clock-wise.
+F1               : Show help for each HotKey pressed
 
-Tab       : Disable Alt+Tab functionality
 
-N         : Show/hide the last notification that HotKeys gave
-P         : Cycle showing notifications from top left, to top right, bottom right,
-            bottom left, center, and at the mouse pointer; basically it's clock-wise.
+Program Management Keys:
+------- ---------- ----
 
-F1        : Show/hide help for each HotKey pressed
-F4        : Exit the HotKeys app
-F12       : Clean restart the HotKeys app forgetting all config except clipboard history
+F2               : Enable all the HotKeys without the need of holding down the CapsLock
+F4               : Exit the HotKeys app
+F12              : Clean restart the HotKeys app forgetting all config except clipboard history
+
+Alt-U            : Check for Updates, if available request User to install.
 
 ```
 
@@ -125,8 +151,8 @@ To give a consistent experience across restarts, some settings are saved on the 
 in a similarly named .ini file where the script is located.
 It remembers following things,
 ```
-01. Alt+Tab is to be allowed or not.
-02. WASD are the Arrow keys or HJKL are.
+01. WASD are the Arrow keys or HJKL are.
+02. Alt+Tab is to be allowed or not.
 03. What copied text was actually used last among many remembered.
 04. Where and if at all, the notifications are to be displayed.
 ```

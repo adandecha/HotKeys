@@ -1,4 +1,8 @@
-﻿Full_Command_Line := DllCall("GetCommandLine", "str")
+﻿Version := 1
+LatestVersionURL := "https://raw.githubusercontent.com/adandecha/HotKeys/map2/Values/Version"
+HotKeysExeDLURL := "https://drive.google.com/u/0/uc?id=1-EpnR58gtZGFPAkmo97CUER857YFSxMp&export=download"
+
+Full_Command_Line := DllCall("GetCommandLine", "str")
 If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 {
     try
@@ -10,20 +14,26 @@ If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
     }
 }
 
+ConfigDir := A_AppData "\HotKeys"
+FP_Variables := ConfigDir "\Variables" 
+FP_ClipTexts := ConfigDir "\ClipTexts"
+FileCreateDir, % FP_Variables
+FileCreateDir, % FP_ClipTexts
+
 #UseHook, On
 #InstallKeybdHook
 #SingleInstance, Force
+#MaxThreads 4
 Coordmode, ToolTip, Screen
 
-CfgPath := A_ScriptFullPath ".ini"
 RmConfigOnExit := False
 
 RegRead, ScreenshotsDir, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders, {B7BEDE81-DF94-4682-A7D8-57A52620B86F}, % UserProfile "\Pictures\Screenshots"
 ScreenshotsDir := ComObjCreate("WScript.Shell").Exec("cmd.exe /q /c <nul set /p=" ScreenshotsDir).StdOut.ReadAll()
 
-M_On_Load := "HotKeys Loaded"
-M_Enabled := "Hotkeys Enabled"
-M_Disabled := "Hotkeys Disabled"
+M_On_Load := "HotKeys v" Version " Loaded"
+M_HK_Enabled := "Hotkeys Enabled"
+M_HK_Disabled := "Hotkeys Disabled"
 M_Caps_On := "Caps On"
 M_Caps_Off := "Caps Off"
 
@@ -35,59 +45,74 @@ C_M_Arbitrary := 5
 C_M_ClipBoard := 6
 C_M_LastToolTip := 7
 
+HiderFuncs := {}
+
 ShowLastNotif := True
-IniRead, ToolTipCoOrdX, %CfgPath%, Globals, ToolTipCoOrdX, 0
-IniRead, ToolTipCoOrdY, %CfgPath%, Globals, ToolTipCoOrdY, 0
-LastShowTipCall := ""
+ToolTipCoOrdX := ConfigGet("ToolTipCoOrdX", 0)
+ToolTipCoOrdY := ConfigGet("ToolTipCoOrdY", 0)
 LastToolTipText := ""
+LastToolTipID := ""
 
-F_H_M_On_Load := Func("HideTip").Bind(C_On_Load)
-F_H_M_Caps_Toggle := Func("HideTip").Bind(C_Caps_Toggle)
-F_H_M_HK_Toggle := Func("HideTip").Bind(C_HK_Toggle)
-F_H_M_Key_Press := Func("HideTip").Bind(C_Key_Press)
-F_H_M_Arbitrary := Func("HideTip").Bind(C_M_Arbitrary)
-F_H_M_ClipBoard := Func("HideTip").Bind(C_M_ClipBoard)
+F_S_M_HK_Enabled := Func("ShowTip").Bind(M_HK_Enabled, C_HK_Toggle, False)
 
-IniRead, ShowKeysOn, %CfgPath%, Globals, ShowKeysOn, % False
+NotifDisplayTime := 3000
+
+ShowKeysOn := ConfigGet("ShowKeysOn", False)
 
 LogKeyPresses := False
 
-IniRead, AltTab, %CfgPath%, Globals, AltTab, % True
+AltTab := ConfigGet("AltTab", True)
 
 CaseChangeState := 0
 CaseChangeText := ""
 
 KeepExistingCapsLockStateButToPermState()
 
-ShowTip(M_On_Load, C_On_Load, F_H_M_On_Load, True)
+If (0 < A_Args.Count() && A_Args[1] == "-ShowMsgUpdated") {
+    ShowTip("Cheers!`nNow Running The Latest HotKeys v" Version "!`n", C_On_Load, True)
+} Else If (0 < A_Args.Count() && A_Args[1] == "-UpdateFailed") {
+    ShowTip("Update Failed!", C_On_Load, True)
+} Else {
+    ShowTip(M_On_Load, C_On_Load, True)
+}
 
 ExpectedClipBoardUpdateTime := 200
 
 ClipStack := []
-Loop, Files, %A_Temp%\ClipText*.txt
-{
-    FileRead, ClipText, %A_LoopFileFullPath%
-    ClipStack.Push(ClipText)
-    FileDelete, %A_LoopFileFullPath%
-}
-IniRead, ClipCurrIdx, %CfgPath%, Globals, ClipCurrIdx, % ClipStack.Count()
-OnExit ExitSub
+LoadClipBoardHistoryOffOfDisk()
+ClipStackCount := ClipStack.Count()
+ClipStackCurr := ConfigGet("ClipStackCurr", ClipStackCount)
 OnClipBoardChange("ClipBoardListener")
-IniRead, DisableClipBoardMsgs, %CfgPath%, Globals, DisableClipBoardMsgs, % True
+; don't read from config let cb status notif be displayed on first load when cl-z is pressed
+DisableClipBoardMsgs := True
 DisableClipBoardListener := False
 SetTimer, ClipBoardPopulate, -1
 
-; Command params do store quotes if used around literal strings of arguments
-; you have to force and expr evaluation if wanted just like around %CfgPath%
-IniRead, FuncOfW, %CfgPath%, Globals, FuncOfW, DoUp
-; need to force use parentheses around comparision exact format isdu
-; need to use var w/o %% on LHS and quotes around DoUp as it has become an expr
-; read explanation01 which is about using quotes in an expr
+FuncOfW := ConfigGet("FuncOfW", "DoUp")
 SetWASDHJKL((FuncOfW == "DoUp"))
 
 Suspend, On
 
 Return
+
+ConfigGet(ByRef Var, ByRef Val := "") {
+    Global FP_Variables
+    FP := FP_Variables "\" Var ".txt"
+    If FileExist(FP) {
+        FileRead, Val, % FP_Variables "\" Var ".txt"
+    } Else {
+        ConfigSet(Var, Val)
+    }
+    Return, % Val
+}
+
+ConfigSet(ByRef Var, ByRef Val) {
+    Global FP_Variables
+    F := FileOpen(FP_Variables "\" Var ".txt", "w")
+    F.Write(Val)
+    F.Close()
+    Return, % Val
+}
 
 SwapFuncOfMovementKeys() {
     Global FuncOfW
@@ -97,10 +122,6 @@ SwapFuncOfMovementKeys() {
 SetWASDHJKL(FuncOfW_Is_To_DoUp) {
     Global FuncOfW, FuncOfA, FuncOfS, FuncOfD, FuncOfH, FuncOfJ, FuncOfK, FuncOfL
     If (FuncOfW_Is_To_DoUp) {
-        ; explanation01
-        ; := RHS considered expr and evaluated so if "DoUp" don't have quotes around it
-        ; DoUp would be evaluated to be 1st use of a var not declared before and thus
-        ; it's value would be "" and thus FuncOfW would store "" in it
         FuncOfW := "DoUp"
         FuncOfA := "DoLeft"
         FuncOfS := "DoDown"
@@ -121,39 +142,71 @@ SetWASDHJKL(FuncOfW_Is_To_DoUp) {
     }
 }
 
-ShowTipArbitrary(ByRef Msg, ByRef VisibilityTimePeriod := 1000) {
-    Global C_M_Arbitrary, F_H_M_Arbitrary
-    ShowTip(Msg, C_M_Arbitrary, F_H_M_Arbitrary, True, VisibilityTimePeriod)
+ShowTipArbitrary(ByRef Msg, ByRef ShowTemporarily := True) {
+    Global C_M_Arbitrary
+    ShowTip(Msg, C_M_Arbitrary, ShowTemporarily)
     Return
 }
 
-ShowTipClipBoard(ByRef Msg, ByRef VisibilityTimePeriod := 3000) {
-    Global C_M_ClipBoard, F_H_M_ClipBoard, DisableClipBoardMsgs
+HideTipArbitrary() {
+    Global C_M_Arbitrary
+    CallTipHider(C_M_Arbitrary)
+}
+
+ShowTipClipBoard(ByRef Msg, ByRef ShowTemporarily := True) {
+    Global C_M_ClipBoard, DisableClipBoardMsgs
     If DisableClipBoardMsgs {
-        %F_H_M_ClipBoard%()
+        HideTipClipBoard()
         Return
     }
-    ShowTip(Msg, C_M_ClipBoard, F_H_M_ClipBoard, True, VisibilityTimePeriod)
+    ShowTip(Msg, C_M_ClipBoard, ShowTemporarily)
     Return
 }
 
-HideTip(ByRef Id) {
-    ToolTip, , , , % Id
+HideTipClipBoard() {
+    Global C_M_ClipBoard
+    CallTipHider(C_M_ClipBoard)
+}
+
+CallTipHider(TipID) {
+    Global HiderFuncs
+    If !HiderFuncs.HasKey(TipID)
+        HiderFuncs[TipID] := Func("HideTip").Bind(TipID)
+    HF := HiderFuncs[TipID]
+    %HF%()
+}
+
+HideTip(ByRef TipID) {
+    ToolTip, , , , % TipId
     Return
 }
 
-ShowTip(ByRef Text, ByRef ConstID, ByRef HiderFunc, ByRef ShowTemporarily, ByRef VisibilityTimePeriod := 2000) {
-    Global LastToolTipText, LastShowTipCall
-    Global ToolTipCoOrdX, ToolTipCoOrdY
+; ConstID is IMP
+; ShowTip will only hide prev notif of same ConstID class
+; Essentially grouping together same class of notifs which should not be dispalyed together or be overwritten by newer msgs
+ShowTip(ByRef Text, ByRef ConstID, ByRef ShowTemporarily) {
+    Global HiderFuncs, NotifDisplayTime, LastToolTipText, LastToolTipID, ToolTipCoOrdX, ToolTipCoOrdY
+
     LastToolTipText := Text
-    LastShowTipCall := Func("ShowTip").Bind(Text, ConstID, HiderFunc, ShowTemporarily, VisibilityTimePeriod)
+    LastToolTipID := ConstID
+
+    ; If don't setup like below, all "SetTimer, % HiderFunc, Delete" calls will be unique
+    ; and thus all new tooltips will start disappearing before %NotifDisplayTime
+    ; so what you want is that SetTimer find HiderFunc functions to be the same
+    ; so that it can relate a settimer, hf, del call's hf with prev settimer, hf, -ndt call's hf
+    If !HiderFuncs.HasKey(ConstID)
+        HiderFuncs[ConstId] := Func("HideTip").Bind(ConstId)
+    HiderFunc := HiderFuncs[ConstId]
+    %HiderFunc%()
 
     ToolTip, % Text, % ToolTipCoOrdX, % ToolTipCoOrdY, % ConstID
 
+    SetTimer, % HiderFunc, Delete
+
     If (ShowTemporarily)
-        SetTimer, % HiderFunc, -%VisibilityTimePeriod%
+        SetTimer, % HiderFunc, % -NotifDisplayTime
     Else
-        SetTimer, % HiderFunc, Off
+        SetTimer, % HiderFunc, Delete
     Return
 }
 
@@ -188,31 +241,34 @@ ToggleExistingCapsLockStateToPermState() {
 }
 
 MakeExistingCapsLockStatePermOff() {
-    Global F_H_M_Caps_Toggle
+    Global C_Caps_Toggle, HiderFuncs
     SetCapsLockState, AlwaysOff
-    F_H_M_Caps_Toggle.Call()
+    HF := HiderFuncs[C_Caps_Toggle]
+    %HF%()
     Return
 }
 
 MakeExistingCapsLockStatePermOn() {
-    Global M_Caps_On, C_Caps_Toggle, F_H_M_Caps_Toggle
+    Global M_Caps_On, C_Caps_Toggle
     SetCapsLockState, AlwaysOn
-    ShowTip(M_Caps_On, C_Caps_Toggle, F_H_M_Caps_Toggle, False)
+    ShowTip(M_Caps_On, C_Caps_Toggle, False)
     Return
 }
 
 OverlayCapsLockStatusMessage() {
-    Global M_Caps_On ,C_Caps_Toggle, F_H_M_Caps_Toggle
+    Global M_Caps_On ,C_Caps_Toggle
     GetKeyState, kst, CapsLock, T
     If (kst = "D")
-        ShowTip(M_Caps_On, C_Caps_Toggle, F_H_M_Caps_Toggle, False)
-    Else
-        F_H_M_Caps_Toggle.Call()
+        ShowTip(M_Caps_On, C_Caps_Toggle, False)
+    Else {
+        HF := HiderFuncs[C_Caps_Toggle]
+        %HF%()
+    }
     Return
 }
 
 ShowKey(K) {
-    Global ShowKeysOn, C_Key_Press, F_H_M_Key_Press, LogKeyPresses
+    Global ShowKeysOn, C_Key_Press, LogKeyPresses
     Static KeyPresses := ""
     M_Temp := True
     If (LogKeyPresses) {
@@ -221,7 +277,9 @@ ShowKey(K) {
         M_Temp := False
     }
     If (ShowKeysOn)
-        ShowTip(K, C_Key_Press, F_H_M_Key_Press, M_Temp)
+        ShowTip(K, C_Key_Press, M_Temp)
+    Else
+        HideTip(C_Key_Press)
     Return
 }
 
@@ -383,8 +441,13 @@ CapsLock & t::
 CapsLock & u::
     Suspend, Permit
 *u::
-    SendInput ^z
-    ShowKey("UnDo")
+    If GetKeyState("Alt") {
+        ShowKey("Check For Update.")
+        SetTimer, CheckForUpdates, -1
+    } Else {
+        SendInput ^z
+        ShowKey("UnDo")
+    }
     Return
 CapsLock & r::
     Suspend, Permit
@@ -439,13 +502,13 @@ CapsLock & /::
 CapsLock & F5::
     Suspend, Permit
 *F5::
+    ExitSub()
     Reload
     Return
 CapsLock & F4::
     Suspend, Permit
 *F4::
-    ShowTipArbitrary("Exiting HotKeys App ..")
-    Sleep, 1000
+    ExitSub()
     ExitApp
 
 *#c::
@@ -586,15 +649,17 @@ CapsLock::
     ToggleExistingCapsLockStateToPermState()
     Return
 
-RCtrl::
-    Suspend
+CapsLock & F2::
+    Suspend, Permit
+*F2::
+    Global F_S_M_HK_Enabled, M_HK_Disabled, C_HK_Toggle
     If (A_IsSuspended) {
-        ShowTip(M_Disabled, C_HK_Toggle, F_H_M_HK_Toggle, True)
+        SetTimer, % F_S_M_HK_Enabled, 500
     } else {
-        ; ContinuouslyPopUpHotKeysEnabledMsg := Func("ShowTip").Bind(M_Enabled, C_HK_Toggle, F_H_M_HK_Toggle, False)
-        ; SetTimer, % ContinuouslyPopUpHotKeysEnabledMsg, 500
-        OverlayCapsLockStatusMessage()
+        SetTimer, % F_S_M_HK_Enabled, Off
+        ShowTip(M_HK_Disabled, C_HK_Toggle, True)
     }
+    Suspend
     Return
 
 CapsLock & Tab::
@@ -661,142 +726,183 @@ ResetCaseChangeState:
 CapsLock & BackSpace::
     Suspend, Permit
 *BackSpace::
-    Global ClipCurrIdx, ClipStack
+    Global ClipStackCurr, ClipStack, FP_ClipTexts
     ShowKey("Clear ClipBoard History.")
     ShowTipClipBoard("ClipBoard History Cleared.")
-    ClipCurrIdx := 0
+    ClipStackCurr := 0
     ClipStack := []
     ClipBoardPutSync("")
-    FileDelete, %A_Temp%\ClipText*.txt
+    FileDelete, % FP_ClipTexts "\*.txt"
     Return
 
 CapsLock & \::
     Suspend, Permit
 *\::
-    Global ClipCurrIdx, ClipStack
+    Global ClipStackCurr, ClipStack
     ShowKey("Forget Current ClipBoard Text From History.")
-    If (ClipCurrIdx = "0") {
+    If (ClipStackCurr = "0") {
         Return
     }
-    i := SubStr("0000000000" . ClipCurrIdx, -9)
-    ShowTipClipBoard("Forgetting ..`n`nClipText#" i ":`n" ClipStack[ClipCurrIdx])
-    ClipStack.RemoveAt(ClipCurrIdx)
-    ClipCurrIdx := Min(ClipCurrIdx, ClipStack.Count())
+    ShowTipClipBoard("Forgetting ..`n`nClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr])
+    ClipStack.RemoveAt(ClipStackCurr)
+    ClipStackCurr := Min(ClipStackCurr, ClipStack.Count())
     SetTimer, ClipBoardPopulate, -1
     Return
 
 CapsLock & q::
+CapsLock & WheelDown::
+CapsLock & WheelLeft::
     Suspend, Permit
 *q::
-    Global ClipCurrIdx, ClipStack
+*WheelDown::
+*WheelLeft::
+    ClipBoardPrev()
+    Return
+
+ClipBoardPrev() {
+    Global ClipStackCurr, ClipStack
     ShowKey("Set ClipBoard To Text Copied Earlier.")
-    If (ClipCurrIdx = "0") {
+    If (ClipStackCurr = "0") {
         Return
     }
-    ClipCurrIdx := ClipCurrIdx == "1" ? ClipStack.Count() : (ClipCurrIdx - 1)
-    i := SubStr("0000000000" . ClipCurrIdx, -9)
-    ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
+    ClipStackCurr := ClipStackCurr == "1" ? ClipStack.Count() : (ClipStackCurr - 1)
+    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr], !GetKeyState("Alt"))
     SetTimer, ClipBoardPopulate, -1
     Return
+}
 
 CapsLock & e::
+CapsLock & WheelUp::
+CapsLock & WheelRight::
     Suspend, Permit
 *e::
-    Global ClipCurrIdx, ClipStack
-    ShowKey("Set ClipBoard To Text Copied Later.")
-    If (ClipCurrIdx = "0") {
-        Return
-    }
-    ClipCurrIdx := ClipCurrIdx == ClipStack.Count() ? 1 : (ClipCurrIdx + 1)
-    i := SubStr("0000000000" . ClipCurrIdx, -9)
-    ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
-    SetTimer, ClipBoardPopulate, -1
+*WheelUp::
+*WheelRight::
+    ClipBoardNext()
     Return
 
+ClipBoardNext() {
+    Global ClipStackCurr, ClipStack
+    ShowKey("Set ClipBoard To Text Copied Later.")
+    If (ClipStackCurr = "0") {
+        Return
+    }
+    ClipStackCurr := ClipStackCurr == ClipStack.Count() ? 1 : (ClipStackCurr + 1)
+    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr], !GetKeyState("Alt"))
+    SetTimer, ClipBoardPopulate, -1
+    Return
+}
+
 CapsLock & z::
+CapsLock & MButton::
     Suspend, Permit
 *z::
-    Global ClipCurrIdx, ClipStack, DisableClipBoardMsgs
-    ShowKey((DisableClipBoardMsgs ? "Show" : "Hide") " Notifications For ClipBoard Changes.")
+*MButton::
+    Global ClipStackCurr, ClipStack, DisableClipBoardMsgs
     DisableClipBoardMsgs := !DisableClipBoardMsgs
-    Msg := "ClipBoard Notifications " (DisableClipBoardMsgs ? "Disabled." : "Enabled.")
-    If (ClipCurrIdx = "0") {
-        ShowTipArbitrary(Msg "`nClipBoard Text History Empty.")
+    Msg := ""
+    If (ClipStackCurr = "0") {
+        Msg := Msg "`nClipBoard Empty."
     } Else {
-        i := SubStr("0000000000" . ClipCurrIdx, -9)
-        ShowTipClipBoard(Msg "`n`nTotal " ClipStack.Count() " ClipText(s) Remembered.`nCurrently On,`nClipText#" i ":`n" ClipStack[ClipCurrIdx])
-        SetTimer, ClipBoardPopulate, -1
+        Msg := Msg "`nTotal " ClipStack.Count() " ClipTexts Remembered."
+        Msg := Msg "`n`nCurrently On ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr]
     }
+    If (DisableClipBoardMsgs) {
+        Msg := "ClipBoard Notifications Disabled."
+        HideTipClipBoard()
+        ShowTipArbitrary(Msg)
+    } Else {
+        Msg := "ClipBoard Notifications Enabled." Msg
+        HideTipArbitrary()
+        ShowTipClipBoard(Msg)
+    }
+    SetTimer, ClipBoardPopulate, -1
     Return
 
 ClipBoardPopulate() {
-    Global ClipCurrIdx, ClipStack
-    If (ClipCurrIdx == "0")
+    Global ClipStackCurr, ClipStack
+    If (ClipStackCurr == "0")
         ClipBoardPutSync("")
     Else
-        ClipBoardPutSync(ClipStack[ClipCurrIdx])
+        ClipBoardPutSync(ClipStack[ClipStackCurr])
 }
 
 ClipBoardListener(ClipContentType) {
-    Global ClipCurrIdx, ClipStack, DisableClipBoardListener
+    Global ClipStackCurr, ClipStack, DisableClipBoardListener
     If (DisableClipBoardListener) {
-        ; ShowTipClipBoard(A_LineNumber ": ClipBoard updated by self.`n" )
         Return
     }
     ClipText := ClipBoard
     If (ClipContentType != "1" or ClipText == "") {
-        ; ShowTipClipBoard(A_LineNumber ": Empty or non-text ClipBoard.`n" )
         Return
     }
     Loop % ClipStack.Count()
     {
         If (ClipText == ClipStack[A_Index]) {
-            i := SubStr("0000000000" . A_Index, -9)
-            ; ShowTipClipBoard(A_LineNumber ": ClipText Already Present.`n" "ClipText#" i ":`n" ClipText)
-            ShowTipClipBoard("ClipText Already Present.`n" "ClipText#" i ":`n" ClipText)
-            ClipCurrIdx := A_Index
+            ShowTipClipBoard("ClipText Already Present.`n`n" "ClipText#" A_Index ":`n" ClipText)
+            ClipStackCurr := A_Index
             Return
         }
     }
     ClipStack.Push(ClipText)
-    ClipCurrIdx := ClipStack.Count()
-    i := SubStr("0000000000" . ClipCurrIdx, -9)
-    ShowTipClipBoard("ClipText#" i ":`n" ClipStack[ClipCurrIdx])
+    ClipStackCurr := ClipStack.Count()
+    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr])
 }
 
-ExitSub:
+ExitSub() {
     Suspend, Permit
-    Global FuncOfW, DisableClipBoardMsgs, ClipCurrIdx, ShowKeysOn, AltTab, RmConfigOnExit
+    Global FuncOfW, DisableClipBoardMsgs, ClipStackCurr, ShowKeysOn, AltTab, RmConfigOnExit
+    Global FP_ClipTexts, FP_Variables
     If (RmConfigOnExit) {
-        FileDelete, %CfgPath%
-        FileDelete, %A_Temp%\ClipText*.txt
+        FileDelete, % FP_Variables "\*.txt"
+        FileDelete, % FP_ClipTexts "\*.txt"
+        ShowTipArbitrary("Configuration Deleted.")
     } Else {
+        ConfigSet("FuncOfW", FuncOfW)
+        ConfigSet("DisableClipBoardMsgs", DisableClipBoardMsgs)
+        ConfigSet("ClipStackCurr", ClipStackCurr)
+        ConfigSet("ShowKeysOn", ShowKeysOn)
+        ConfigSet("AltTab", AltTab)
+        ConfigSet("ToolTipCoOrdX", ToolTipCoOrdX)
+        ConfigSet("ToolTipCoOrdY", ToolTipCoOrdY)
         SaveClipBoardHistoryOnDisk()
-        IniWrite, %FuncOfW%, %CfgPath%, Globals, FuncOfW
-        IniWrite, %DisableClipBoardMsgs%, %CfgPath%, Globals, DisableClipBoardMsgs
-        IniWrite, %ClipCurrIdx%, %CfgPath%, Globals, ClipCurrIdx
-        IniWrite, %ShowKeysOn%, %CfgPath%, Globals, ShowKeysOn
-        IniWrite, %AltTab%, %CfgPath%, Globals, AltTab
-        IniWrite, %ToolTipCoOrdX%, %CfgPath%, Globals, ToolTipCoOrdX
-        IniWrite, %ToolTipCoOrdY%, %CfgPath%, Globals, ToolTipCoOrdY
+        ShowTipArbitrary("Configuration Saved.")
     }
-    ExitApp
+    ShowTipArbitrary("Exiting HotKeys App ..")
+    Return
+}
 
 SaveClipBoardHistoryOnDisk() {
-    Global ClipCurrIdx, ClipStack
-    FileDelete, %A_Temp%\ClipText*.txt
-    If (ClipCurrIdx = "0") {
+    Global FP_ClipTexts, ClipStackCurr, ClipStack, FP_ClipTexts
+    FileDelete, % FP_ClipTexts "\*.txt"
+    If (ClipStackCurr = "0") {
         ShowTipClipBoard("No ClipTexts To Save On The Disk!")
         Return False
     }
-    SetFormat, Float, 06.0
     Loop % ClipStack.Count()
     {
-        i := SubStr("0000000000" . A_Index, -9)
-        FileAppend, % ClipStack[A_Index], %A_Temp%\ClipText%i%.txt
+        FileAppend, % ClipStack[A_Index], % FP_ClipTexts "\" A_Index ".txt"
     }
-    ShowTipClipBoard("Saved ClipText(s) At,`n" A_Temp "\ClipTextXXXXXXXXXX.txt File(s).")
+    ShowTipClipBoard("ClipTexts Saved.")
     Return True
+}
+
+LoadClipBoardHistoryOffOfDisk() {
+    Global ClipStack, FP_ClipTexts
+    ClipStack := []
+    K := 1
+    FP := ""
+    ClipText := ""
+    While (True) {
+        FP := FP_ClipTexts "\" K ".txt"
+        If FileExist(FP) {
+            FileRead, ClipText, % FP
+            ClipStack.Push(ClipText)
+            K += 1
+        } Else {
+            Return
+        }
+    }
 }
 
 ClipBoardPutSync(ByRef text) {
@@ -811,15 +917,14 @@ CapsLock & `::
     Suspend, Permit
 *`::
     ShowKey("Show The Remembered CliBoard Texts In NotePad++.")
-    If !SaveClipBoardHistoryOnDisk()
-        Return
-    SetTimer, LaunchClipTextsInNotePadPP, -500
+    SetTimer, LaunchClipTextsInNotePadPP, -1
     Return
 
 LaunchClipTextsInNotePadPP() {
-    Global ClipCurrIdx
-    I := SubStr("0000000000" . ClipCurrIdx, -9)
-    Run, "C:\Program Files\Notepad++\notepad++.exe" "-multiInst" "-nosession" "%A_Temp%\ClipText*.txt" "%A_Temp%\ClipText%I%.txt"
+    Global FP_ClipTexts, ClipStackCurr
+    If SaveClipBoardHistoryOnDisk() {
+        Run, % """C:\Program Files\Notepad++\notepad++.exe"" -multiInst -nosession """ FP_ClipTexts "\*.txt"" """ FP_ClipTexts "\" ClipStackCurr ".txt"""
+    }
 }
 
 CapsLock & m::
@@ -834,44 +939,38 @@ CapsLock & F12::
 *F12::
     Global RmConfigOnExit
     RmConfigOnExit := True
+    ExitSub()
     Reload
     Return
 
 CapsLock & N::
     Suspend, Permit
 *N::
-    Global ShowLastNotif, LastToolTipText, C_M_LastToolTip
-    Global ToolTipCoOrdX, ToolTipCoOrdY
+    Global ShowLastNotif, LastToolTipText, LastToolTipID, C_M_LastToolTip
+    CallTipHider(LastToolTipID)
     If (ShowLastNotif) {
         ShowLastNotif := False
-        ToolTip, % LastToolTipText, % ToolTipCoOrdX, % ToolTipCoOrdY, % C_M_LastToolTip
+        ShowTip(LastToolTipText, C_M_LastToolTip, False)
     } Else {
         ShowLastNotif := True
-        ToolTip, , , , % C_M_LastToolTip
+        CallTipHider(C_M_LastToolTip)
     }
     Return
 
 CapsLock & P::
     Suspend, Permit
 *P::
-    Global ToolTipCoOrdX, ToolTipCoOrdY, LastShowTipCall
+    Global ToolTipCoOrdX, ToolTipCoOrdY, LastToolTipText, LastToolTipID
     If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = 0) {
         ToolTipCoOrdX := A_ScreenWidth
         ToolTipCoOrdY := 0
-    } Else
-    If (ToolTipCoOrdX = A_ScreenWidth  && ToolTipCoOrdY = 0) {
+    } Else If (ToolTipCoOrdX = A_ScreenWidth  && ToolTipCoOrdY = 0) {
         ToolTipCoOrdX := A_ScreenWidth
         ToolTipCoOrdY := A_ScreenHeight
-    } Else
-    If (ToolTipCoOrdX = A_ScreenWidth && ToolTipCoOrdY = A_ScreenHeight) {
+    } Else If (ToolTipCoOrdX = A_ScreenWidth && ToolTipCoOrdY = A_ScreenHeight) {
         ToolTipCoOrdX := 0
         ToolTipCoOrdY := A_ScreenHeight
-    } Else
-    If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = A_ScreenHeight) {
-        ToolTipCoOrdX := A_ScreenWidth / 2
-        ToolTipCoOrdY := A_ScreenHeight / 2
-    } Else
-    If (ToolTipCoOrdX = A_ScreenWidth / 2 && ToolTipCoOrdY = A_ScreenHeight / 2) {
+    } Else If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = A_ScreenHeight) {
         CoordMode, Mouse, Screen
         MouseGetPos X, Y
         ToolTipCoOrdX := X
@@ -880,9 +979,70 @@ CapsLock & P::
         ToolTipCoOrdX := 0
         ToolTipCoOrdY := 0
     }
-    ; hide CL-N notif
-    ToolTip, , , , % C_M_LastToolTip
-    ; re-show CL-F1 or CL-Z notifs
-    LastShowTipCall.Call()
+    ShowTip(LastToolTipText, LastToolTipID, True)
+    Return
+
+CheckForUpdates() {
+    Global Version, LatestVersionURL, HotKeysExeDLURL
+    ShowTipArbitrary("Please Wait!`nChecking If An Update Is Available.")
+    LatestVersion := Version
+    Try {
+        LatestVersion := HttpGet(LatestVersionURL)
+        ; MsgBox, % LatestVersion " <= " Version " ? " (LatestVersion <= Version)
+    } Catch {
+        ShowTipArbitrary("Couldn't Retrieve Latest Version!")
+        Return
+    }
+    If (LatestVersion <= Version) {
+        ShowTipArbitrary("Cheers!`nAlready Running The Latest Version Of HotKeys!")
+        Return
+    } Else {
+        MsgBox, 4, % "Update On Checking On Update!", % "An Update Is Available. Want To Try It?"
+        IfMsgBox, No
+            Return
+        IfMsgBox, TimeOut
+            Return
+        ShowTipArbitrary("Hold On Please!`nDownloading The Latest Version Of HotKeys.")
+        URLDownloadToFile, % HotKeysExeDLURL, % A_ScriptFullPath ".Latest"
+        ExitSub()
+        Run, PowerShell "Echo 'Downloaded The Latest Version. `nNow Overwriting The Old Version.'; Sleep 3; Move-Item -Path '%A_ScriptFullPath%.Latest' -Destination '%A_ScriptFullPath%' -Force; Start-Process -FilePath '%A_ScriptFullPath%' -ArgumentList '-ShowMsgUpdated';"
+        ExitApp
+    }
+}
+
+HttpGet(URL) {
+    req := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    req.Open("GET", URL, True)
+    req.Send()
+    req.WaitForResponse()
+    Return req.ResponseText
+}
+
+CapsLock & LButton::
+    Suspend, Permit
+*LButton::
+    If GetKeyState("Alt") {
+        SendInput {LButton}+{Insert}
+    } Else If GetKeyState("Ctrl") {
+        SendInput {LButton 2}+{Insert}
+    } Else If GetKeyState("Shift") {
+        SendInput {LButton}^{Home}{Shift Down}^{End}{Shift Up}+{Insert}
+    } Else {
+        SendInput +{Insert}
+    }
+    Return
+
+CapsLock & RButton::
+    Suspend, Permit
+*RButton::
+    If GetKeyState("Alt") {
+        SendInput {LButton}%ClipBoard%
+    } Else If GetKeyState("Ctrl") {
+        SendInput {LButton 2}%ClipBoard%
+    } Else If GetKeyState("Shift") {
+        SendInput {LButton}^{Home}{Shift Down}^{End}{Shift Up}%ClipBoard%
+    } Else {
+        SendInput %ClipBoard%
+    }
     Return
 
