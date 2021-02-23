@@ -2,7 +2,7 @@ Shorten traveling the keyboard to a measly 60%!
 
 This is an AutoHotKey script to bind some very useful CapsLock hotkeys to the keyboard.
 
-To have a look-see, download and run **[this](https://drive.google.com/u/0/uc?id=1-EpnR58gtZGFPAkmo97CUER857YFSxMp&export=download)**.
+To have a look-see, download and run **[this](https://github.com/adandecha/HostedFilesPublic/raw/master/HotKeys.exe)**.
 <br/>
 To compile it manually, please read through the following.
 
@@ -64,12 +64,12 @@ E|ScrollUp       : Reset clipboard to text copied later
 V|LeftClick      : Pastes clipboard text (Performs, Shift+Insert)
 Alt+LeftClick    : Single click and paste clipboard text (Performs, LeftCLick Shift+Insert)
 Ctrl+LeftClick   : Double click and paste clipboard text (Performs, LeftCLick LeftCLick Shift+Insert)
-Shift+LeftClick  : Select all text and paste clipboard text (Performs, Ctrl+Home ShiftDown Ctrl+End ShiftUp Shift+Insert)
+Shift+LeftClick  : Select all text and paste clipboard text (Performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp Shift+Insert)
 
 T|RightClick     : Types in clipboard text (can be used where text is not allowed to be pasted)
 Alt+LeftClick    : Single click and type in clipboard text (Before typing, it performs, LeftCLick)
 Ctrl+LeftClick   : Double click and type in clipboard text (Before typing, it performs, LeftCLick LeftCLick)
-Shift+LeftClick  : Select all and type in clipboard text (Before typing, it performs, Ctrl+Home ShiftDown Ctrl+End ShiftUp)
+Shift+LeftClick  : Select all and type in clipboard text (Before typing, it performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp)
 
 Z                : Show notifications when clipboard text changes
 `                : Show the remembered cliboard texts in NotePad++ 64-bit
@@ -143,7 +143,7 @@ F2               : Enable all the HotKeys without the need of holding down the C
 F4               : Exit the HotKeys app
 F12              : Clean restart the HotKeys app forgetting all config except clipboard history
 
-Alt-U            : Check for Updates, if available request User to install.
+Alt-U            : Check for Updates, and request User to install, if available.
 
 ```
 

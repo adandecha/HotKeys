@@ -1,6 +1,6 @@
-﻿Version := 1
+﻿Version := 1.0
 LatestVersionURL := "https://raw.githubusercontent.com/adandecha/HotKeys/map2/Values/Version"
-HotKeysExeDLURL := "https://drive.google.com/u/0/uc?id=1-EpnR58gtZGFPAkmo97CUER857YFSxMp&export=download"
+HotKeysExeDLURL := "https://github.com/adandecha/HostedFilesPublic/raw/master/HotKeys.exe"
 
 Full_Command_Line := DllCall("GetCommandLine", "str")
 If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
@@ -14,17 +14,25 @@ If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
     }
 }
 
+#UseHook, On
+#InstallKeybdHook
+#SingleInstance, Force
+#MaxThreads 4
+Coordmode, ToolTip, Screen
+SetFormat, Float, .2
+
 ConfigDir := A_AppData "\HotKeys"
 FP_Variables := ConfigDir "\Variables" 
 FP_ClipTexts := ConfigDir "\ClipTexts"
 FileCreateDir, % FP_Variables
 FileCreateDir, % FP_ClipTexts
 
-#UseHook, On
-#InstallKeybdHook
-#SingleInstance, Force
-#MaxThreads 4
-Coordmode, ToolTip, Screen
+LastSize := ""
+LastSizeTick := ""
+
+; A way to temp change version manually to too high or too low
+; So as to either avoid update or force DL update
+Version := ConfigGet("Version", Version)
 
 RmConfigOnExit := False
 
@@ -197,11 +205,11 @@ ShowTip(ByRef Text, ByRef ConstID, ByRef ShowTemporarily) {
     If !HiderFuncs.HasKey(ConstID)
         HiderFuncs[ConstId] := Func("HideTip").Bind(ConstId)
     HiderFunc := HiderFuncs[ConstId]
-    %HiderFunc%()
+    ; %HiderFunc%()
 
     ToolTip, % Text, % ToolTipCoOrdX, % ToolTipCoOrdY, % ConstID
 
-    SetTimer, % HiderFunc, Delete
+    ; SetTimer, % HiderFunc, Delete
 
     If (ShowTemporarily)
         SetTimer, % HiderFunc, % -NotifDisplayTime
@@ -982,12 +990,18 @@ CapsLock & P::
     ShowTip(LastToolTipText, LastToolTipID, True)
     Return
 
+RmLF(ByRef Str) {
+    StringReplace, Str, Str, `r, , All
+    StringReplace, Str, Str, `n, , All
+    Return Str
+}
+
 CheckForUpdates() {
     Global Version, LatestVersionURL, HotKeysExeDLURL
     ShowTipArbitrary("Please Wait!`nChecking If An Update Is Available.")
     LatestVersion := Version
     Try {
-        LatestVersion := HttpGet(LatestVersionURL)
+        LatestVersion := RmLF(HttpGet(LatestVersionURL))
         ; MsgBox, % LatestVersion " <= " Version " ? " (LatestVersion <= Version)
     } Catch {
         ShowTipArbitrary("Couldn't Retrieve Latest Version!")
@@ -1003,7 +1017,7 @@ CheckForUpdates() {
         IfMsgBox, TimeOut
             Return
         ShowTipArbitrary("Hold On Please!`nDownloading The Latest Version Of HotKeys.")
-        URLDownloadToFile, % HotKeysExeDLURL, % A_ScriptFullPath ".Latest"
+        DLFile(HotKeysExeDLURL, A_ScriptFullPath ".Latest", True)
         ExitSub()
         Run, PowerShell "Echo 'Downloaded The Latest Version. `nNow Overwriting The Old Version.'; Sleep 3; Move-Item -Path '%A_ScriptFullPath%.Latest' -Destination '%A_ScriptFullPath%' -Force; Start-Process -FilePath '%A_ScriptFullPath%' -ArgumentList '-ShowMsgUpdated';"
         ExitApp
@@ -1016,6 +1030,34 @@ HttpGet(URL) {
     req.Send()
     req.WaitForResponse()
     Return req.ResponseText
+}
+
+DLFile(URL, FP, OW) { ; DL=Download, FP=FilePath, OW=OverWrite
+    req := ComObjCreate("WinHttp.WinHttpRequest.5.1")
+    req.Open("HEAD", URL, False)
+    req.Send()
+    size_total := req.GetResponseHeader("Content-Length")
+    LastSize := 0
+    LastSizeTick := A_TickCount
+    ProgressUpdater := Func("DLProgress").Bind(URL, FP, size_total)
+    SetTimer, % ProgressUpdater, 1000
+    URLDownloadToFile, % URL, % FP
+}
+
+DLProgress(ByRef URL, ByRef FP, ByRef FinalSize) {
+    Global C_M_Arbitrary, LastSizeTick, LastSize
+    If !FileExist(FP) Return
+    CurrentSize := 0
+    FileGetSize, CurrentSize, % FP
+    CurrentSizeTick := A_TickCount ; Ticks are at milliseconds
+    MBps := (((CurrentSize - LastSize) / 1048576) / ((CurrentSizeTick - LastSizeTick) / 1000))
+    LastSize := CurrentSize
+    LastSizeTick := CurrentSizeTick
+    PercentDone := (CurrentSize / FinalSize * 100)
+    If (PercentDone = 100)
+        CallTipHider(C_M_Arbitrary)
+    Else
+        ShowTipArbitrary("Downloading,`n    " URL "`n`nSpeed,`n    " MBps " MBps`n`nDownloaded,`n    " (CurrentSize / 1048576) " / " (FinalSize / 1048576) " MB (" PercentDone "%)")
 }
 
 CapsLock & LButton::
