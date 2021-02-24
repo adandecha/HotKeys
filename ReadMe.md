@@ -8,13 +8,9 @@ To compile it manually, please read through the following.
 
 **Setting things up:**
 
-Install [Git](https://git-scm.com/download/win), [AutoHotkey](https://autohotkey.com/download/), and [Notepad++](https://notepad-plus-plus.org/downloads/).
-<br/>
 Download and extract [this](https://github.com/adandecha/HotKeys/archive/map2.zip).
 <br/>
-Run [Install.bat](Install.bat) as Admin.
-<br/>
-It adds HotKeys to Windows StartUp.
+Run [Installer.bat](Installer.bat) as Admin.
 <br/>
 In detail, it does [these](Steps.txt) set of things.
 <br/>
@@ -72,7 +68,7 @@ Ctrl+LeftClick   : Double click and type in clipboard text (Before typing, it pe
 Shift+LeftClick  : Select all and type in clipboard text (Before typing, it performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp)
 
 Z                : Show notifications when clipboard text changes
-`                : Show the remembered cliboard texts in NotePad++ 64-bit
+`                : Show the remembered cliboard texts in NotePad++ 64-bit (get it from notepad-plus-plus.org/downloads)
 
 BackSpace        : Forget all the remembered clipboard texts
 \                : Forget current clipboard text
