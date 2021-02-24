@@ -34,116 +34,115 @@ On the left is what's pressed, and on the right is what it results into.
 Movement Keys:
 -------- ----
 
-A|H              : Left
-D|L              : Right
+A|H                      : Left
+D|L                      : Right
 
-W|K              : Up
-S|J              : Down
+W|K                      : Up
+S|J                      : Down
 
-H|A              : Home
-L|D              : End
+H|A                      : Home
+L|D                      : End
 
-J|S              : PageDown
-K|W              : PageUp
+J|S                      : PageDown
+K|W                      : PageUp
 
-M                : Swap functionalities of movement keys WASD with KHJL
+M                        : Swap functionalities of movement keys WASD with KHJL
 
-I                : Backspace
-O                : Delete
+I                        : Backspace
+O                        : Delete
 
 
 ClipBoard Management Keys:
 --------- ----------  ----
 
-X                : Cut (Ctrl+X)
-C                : Copy (Ctrl+C)
+X                        : Cut (Ctrl+X)
+C                        : Copy (Ctrl+C)
 
-Q|ScrollDown     : Reset clipboard to text copied earlier
-E|ScrollUp       : Reset clipboard to text copied later
+Q|ScrollUp|ScrollLeft    : Reset clipboard to text copied earlier (hold Ctrl to slow down navigating clip text history)
+E|ScrollDown|ScrollRight : Reset clipboard to text copied later (hold Ctrl to slow down navigating clip text history)
 
-V|LeftClick      : Pastes clipboard text (Performs, Shift+Insert)
-Alt+LeftClick    : Single click and paste clipboard text (Performs, LeftCLick Shift+Insert)
-Ctrl+LeftClick   : Double click and paste clipboard text (Performs, LeftCLick LeftCLick Shift+Insert)
-Shift+LeftClick  : Select all text and paste clipboard text (Performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp Shift+Insert)
+V|LeftClick              : Pastes clipboard text (Performs, Shift+Insert)
+Alt+LeftClick            : Single click and paste clipboard text (Performs, LeftCLick Shift+Insert)
+Ctrl+LeftClick           : Double click and paste clipboard text (Performs, LeftCLick LeftCLick Shift+Insert)
+Shift+LeftClick          : Select all text and paste clipboard text (Performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp Shift+Insert)
 
-T|RightClick     : Types in clipboard text (can be used where text is not allowed to be pasted)
-Alt+LeftClick    : Single click and type in clipboard text (Before typing, it performs, LeftCLick)
-Ctrl+LeftClick   : Double click and type in clipboard text (Before typing, it performs, LeftCLick LeftCLick)
-Shift+LeftClick  : Select all and type in clipboard text (Before typing, it performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp)
+T|RightClick             : Types in clipboard text (can be used where text is not allowed to be pasted)
+Alt+LeftClick            : Single click and type in clipboard text (Before typing, it performs, LeftCLick)
+Ctrl+LeftClick           : Double click and type in clipboard text (Before typing, it performs, LeftCLick LeftCLick)
+Shift+LeftClick          : Select all and type in clipboard text (Before typing, it performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp)
 
-Z                : Show notifications when clipboard text changes
-`                : Show the remembered cliboard texts in NotePad++ 64-bit
+Z                        : Show notifications when clipboard text changes
+`                        : Show the remembered cliboard texts in NotePad++ 64-bit
 
-BackSpace        : Forget all the remembered clipboard texts
-\                : Forget current clipboard text
+BackSpace                : Forget all the remembered clipboard texts
+\                        : Forget current clipboard text
 
 
 Function Keys:
 -------- ----
 
-1                : F1
-2                : F2
-3                : F3
-4                : F4
-5                : F5
-6                : F6
-7                : F7
-8                : F8
-9                : F9
-0                : F10
--                : F11
-+                : F12
+1                        : F1
+2                        : F2
+3                        : F3
+4                        : F4
+5                        : F5
+6                        : F6
+7                        : F7
+8                        : F8
+9                        : F9
+0                        : F10
+-                        : F11
++                        : F12
 
 
 Media Keys:
 ----- ----
 
-,                : Volume down
-.                : Volume up
-/                : Volume mute
+,                        : Volume down
+.                        : Volume up
+/                        : Volume mute
 
-Shift+,          : Previous track
-Shift+.          : Next track
-Shift+/          : Pause/play
+Shift+,                  : Previous track
+Shift+.                  : Next track
+Shift+/                  : Pause/play
 
 
 Misc. Keys:
 ----  ----
 
-[                : Project to PC screen only
-]                : Project to second screen only
+[                        : Project to PC screen only
+]                        : Project to second screen only
 
-Y                : Save screenshot (Win+PrintScreen) on the disk
-Alt-Y            : Show screenshot in explorer
-Ctrl-Y           : Copy screenshot's full path
+Y                        : Save screenshot (Win+PrintScreen) on the disk
+Alt-Y                    : Show screenshot in explorer
+Ctrl-Y                   : Copy screenshot's full path
 
-Tab              : Disable Alt+Tab functionality
+Tab                      : Disable Alt+Tab functionality
 
-U                : UnDo (Ctrl+Z)
-R                : ReDo (Ctrl+Y)
-F                : Find (Ctrl+F)
+U                        : UnDo (Ctrl+Z)
+R                        : ReDo (Ctrl+Y)
+F                        : Find (Ctrl+F)
 
-;                : Do a left click
-'                : Opens context menu
+;                        : Do a left click
+'                        : Opens context menu
 
 
 Notification Management Keys:
 ------------ ---------- ----
 
-N                : Show the last notification that HotKeys gave
-P                : Cycle showing notifications from top left, to top right, bottom right,
-                   bottom left, and at the mouse pointer; go to all corners clock-wise.
-F1               : Show help for each HotKey pressed
+N                        : Show the last notification that HotKeys gave
+P                        : Cycle showing notifications from top left, to top right, bottom right, bottom left, and at the mouse pointer; go to all corners clock-wise.
+F1                       : Show help for each HotKey pressed
 
 
 Program Management Keys:
 ------- ---------- ----
 
-F2               : Enable all the HotKeys without the need of holding down the CapsLock
-F4               : Exit the HotKeys app
-F12              : Clean restart the HotKeys app forgetting all config except clipboard history
+F2                       : Enable all the HotKeys without the need of holding down the CapsLock
+F4                       : Exit the HotKeys app
+F12                      : Clean restart the HotKeys app forgetting all config except clipboard history
 
-Alt-U            : Check for Updates, and request User to install, if available.
+Alt-U                    : Check for Updates, and request User to install, if available.
 
 ```
 

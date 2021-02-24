@@ -18,6 +18,8 @@ If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 #InstallKeybdHook
 #SingleInstance, Force
 #MaxThreads 4
+#MaxHotkeysPerInterval 10000000
+
 Coordmode, ToolTip, Screen
 SetFormat, Float, .2
 
@@ -91,13 +93,14 @@ LoadClipBoardHistoryOffOfDisk()
 ClipStackCount := ClipStack.Count()
 ClipStackCurr := ConfigGet("ClipStackCurr", ClipStackCount)
 OnClipBoardChange("ClipBoardListener")
-; don't read from config let cb status notif be displayed on first load when cl-z is pressed
-DisableClipBoardMsgs := True
+DisableClipBoardMsgs := ConfigGet("DisableClipBoardMsgs", True)
 DisableClipBoardListener := False
 SetTimer, ClipBoardPopulate, -1
 
 FuncOfW := ConfigGet("FuncOfW", "DoUp")
 SetWASDHJKL((FuncOfW == "DoUp"))
+
+NextScrollWaitTime := 500
 
 Suspend, On
 
@@ -757,14 +760,11 @@ CapsLock & \::
     SetTimer, ClipBoardPopulate, -1
     Return
 
-CapsLock & q::
-CapsLock & WheelDown::
-CapsLock & WheelLeft::
+NoOp_SP:
     Suspend, Permit
-*q::
-*WheelDown::
-*WheelLeft::
-    ClipBoardPrev()
+    Return
+
+NoOp:
     Return
 
 ClipBoardPrev() {
@@ -778,16 +778,39 @@ ClipBoardPrev() {
     SetTimer, ClipBoardPopulate, -1
     Return
 }
-
-CapsLock & e::
-CapsLock & WheelUp::
-CapsLock & WheelRight::
+CapsLock & q::
     Suspend, Permit
-*e::
-*WheelUp::
-*WheelRight::
-    ClipBoardNext()
+*q::
+    ClipBoardPrev()
     Return
+CapsLock & WheelUp::
+CapsLock & WheelLeft::
+ClipBoardPrevLabel_SP:
+    Suspend, Permit
+    ClipBoardPrev()
+    WheelsPrevDisable()
+    Return
+*WheelUp::
+*WheelLeft::
+ClipBoardPrevLabel:
+    ClipBoardPrev()
+    WheelsPrevDisable()
+    Return
+WheelsPrevDisable() {
+    If !GetKeyState("Ctrl") Return
+    Global NextScrollWaitTime
+    HotKey, *WheelUp, NoOp
+    HotKey, *WheelLeft, NoOp
+    HotKey, CapsLock & WheelUp, NoOp_SP
+    HotKey, CapsLock & WheelLeft, NoOp_SP
+    SetTimer, WheelsPrevEnable, % -NextScrollWaitTime
+}
+WheelsPrevEnable() {
+    HotKey, *WheelUp, ClipBoardPrevLabel
+    HotKey, *WheelLeft, ClipBoardPrevLabel
+    HotKey, CapsLock & WheelUp, ClipBoardPrevLabel_SP
+    HotKey, CapsLock & WheelLeft, ClipBoardPrevLabel_SP
+}
 
 ClipBoardNext() {
     Global ClipStackCurr, ClipStack
@@ -800,6 +823,40 @@ ClipBoardNext() {
     SetTimer, ClipBoardPopulate, -1
     Return
 }
+CapsLock & e::
+    Suspend, Permit
+*e::
+    ClipBoardNext()
+    Return
+CapsLock & WheelDown::
+CapsLock & WheelRight::
+ClipBoardNextLabel_SP:
+    Suspend, Permit
+    ClipBoardNext()
+    WheelsNextDisable()
+    Return
+*WheelDown::
+*WheelRight::
+ClipBoardNextLabel:
+    ClipBoardNext()
+    WheelsNextDisable()
+    Return
+WheelsNextDisable() {
+    If !GetKeyState("Ctrl") Return
+    Global NextScrollWaitTime
+    HotKey, *WheelDown, NoOp
+    HotKey, *WheelRight, NoOp
+    HotKey, CapsLock & WheelDown, NoOp_SP
+    HotKey, CapsLock & WheelRight, NoOp_SP
+    SetTimer, WheelsNextEnable, % -NextScrollWaitTime
+}
+WheelsNextEnable() {
+    HotKey, *WheelDown, ClipBoardNextLabel
+    HotKey, *WheelRight, ClipBoardNextLabel
+    HotKey, CapsLock & WheelDown, ClipBoardNextLabel_SP
+    HotKey, CapsLock & WheelRight, ClipBoardNextLabel_SP
+}
+
 
 CapsLock & z::
 CapsLock & MButton::
