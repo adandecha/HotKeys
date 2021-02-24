@@ -1,1 +1,0 @@
-Make it a 60% KeyBoard - Set Systemwide CapsLock HotKeys to move around via WASD/HJKL keys, cycle among past clipboard texts, send Media keys, and much more.

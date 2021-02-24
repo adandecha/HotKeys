@@ -1,7 +1,8 @@
+Download and install AutoHotkey if not already present, to be able to compile .ahk files.
+
 Steps to run HotKeys as Admin, every time the Windows starts.
 
-    Right click on the HotKeys.ahk file, and compile it.
-    Move the generated HotKeys.exe to '%UserProfile%/Documents/HotKeys.exe'.
+    Move the HotKeys.ahk file to '%ProgramFiles%/HotKeys/ directory'.
 
     Open 'Task Scheduler' and in that do 'Create Task'.
 
@@ -18,7 +19,7 @@ Steps to run HotKeys as Admin, every time the Windows starts.
     In 'Actions' tab,
         Click 'New...'
         Action start a program.
-        Browse and select the before compiled HotKeys.exe file.
+        Browse and select the HotKeys.ahk file.
 
     In 'Conditions' tab,
         Uncheck 'Start the task only if computer is idle for'

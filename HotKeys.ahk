@@ -1,11 +1,13 @@
-﻿Version := 1.0
-LatestVersionURL := "https://raw.githubusercontent.com/adandecha/HotKeys/map2/Values/Version"
-HotKeysExeDLURL := "https://github.com/adandecha/HostedFilesPublic/raw/master/HotKeys.exe"
+﻿#SingleInstance Off
+#MaxHotkeysPerInterval 10000000
+#MaxThreads 4
+#UseHook, On
+#InstallKeybdHook
 
 Full_Command_Line := DllCall("GetCommandLine", "str")
 If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 {
-    try
+    Try
     {
         If A_IsCompiled
             Run *RunAs "%A_ScriptFullPath%" /restart
@@ -14,11 +16,6 @@ If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
     }
 }
 
-#UseHook, On
-#InstallKeybdHook
-#SingleInstance, Force
-#MaxThreads 4
-#MaxHotkeysPerInterval 10000000
 Coordmode, ToolTip, Screen
 SetFormat, Float, .2
 
@@ -28,14 +25,28 @@ FP_ClipTexts := ConfigDir "\ClipTexts"
 FileCreateDir, % FP_Variables
 FileCreateDir, % FP_ClipTexts
 
+; Since #SingleInstance, Force isn't doing much .. Hence the foll ..
+SelfPID := DllCall("GetCurrentProcessId")
+PrevPID := ConfigGet("PrevPID", SelfPID)
+If (PrevPID != SelfPID) {
+    Try {
+        RunWait, %ComSpec% /c TaskKill /F /PID %PrevPID%, , Hide
+    }
+}
+ConfigSet("PrevPID", SelfPID)
+
+Version       := 2.0
+GitMainBranch := "map2"
+LatestZipURL  := "https://github.com/adandecha/HotKeys/zipball/" GitMainBranch "/"
+LatestCodeURL := "https://raw.githubusercontent.com/adandecha/HotKeys/" GitMainBranch "/HotKeys.ahk"
+LatestCode    := ""
+
+InstallationDir := A_ProgramFiles "\HotKeys"
+ZipFP := InstallationDir "\HotKeys.zip"
+UnZipDir := InstallationDir "\InstallationRecipe"
+
 LastSize := ""
 LastSizeTick := ""
-
-; A way to temp change version manually to too high or too low
-; So as to either avoid update or force DL update
-Version := ConfigGet("Version", Version)
-
-RmConfigOnExit := False
 
 RegRead, ScreenshotsDir, HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders, {B7BEDE81-DF94-4682-A7D8-57A52620B86F}, % UserProfile "\Pictures\Screenshots"
 ScreenshotsDir := ComObjCreate("WScript.Shell").Exec("cmd.exe /q /c <nul set /p=" ScreenshotsDir).StdOut.ReadAll()
@@ -58,7 +69,7 @@ HiderFuncs := {}
 
 ShowLastNotif := True
 ToolTipCoOrdX := ConfigGet("ToolTipCoOrdX", 0)
-ToolTipCoOrdY := ConfigGet("ToolTipCoOrdY", 0)
+ToolTipCoOrdY := ConfigGet("ToolTipCoOrdY", A_ScreenHeight)
 LastToolTipText := ""
 LastToolTipID := ""
 
@@ -103,7 +114,11 @@ Suspend, On
 
 Return
 
-ConfigGet(ByRef Var, ByRef Val := "") {
+NoOp() {
+    Return
+}
+
+ConfigGet(Var, Val := "") {
     Global FP_Variables
     FP := FP_Variables "\" Var ".txt"
     If FileExist(FP) {
@@ -114,7 +129,7 @@ ConfigGet(ByRef Var, ByRef Val := "") {
     Return, % Val
 }
 
-ConfigSet(ByRef Var, ByRef Val) {
+ConfigSet(Var, Val) {
     Global FP_Variables
     F := FileOpen(FP_Variables "\" Var ".txt", "w")
     F.Write(Val)
@@ -148,9 +163,10 @@ SetWASDHJKL(FuncOfW_Is_To_DoUp) {
         FuncOfK := "DoUp"
         FuncOfL := "DoRight"
     }
+    ConfigSet("FuncOfW", FuncOfW)
 }
 
-ShowTipArbitrary(ByRef Msg, ByRef ShowTemporarily := True) {
+ShowTipArbitrary(Msg, ShowTemporarily := True) {
     Global C_M_Arbitrary
     ShowTip(Msg, C_M_Arbitrary, ShowTemporarily)
     Return
@@ -161,7 +177,7 @@ HideTipArbitrary() {
     CallTipHider(C_M_Arbitrary)
 }
 
-ShowTipClipBoard(ByRef Msg, ByRef ShowTemporarily := True) {
+ShowTipClipBoard(Msg, ShowTemporarily := True) {
     Global C_M_ClipBoard, DisableClipBoardMsgs
     If DisableClipBoardMsgs {
         HideTipClipBoard()
@@ -184,7 +200,7 @@ CallTipHider(TipID) {
     %HF%()
 }
 
-HideTip(ByRef TipID) {
+HideTip(TipID) {
     ToolTip, , , , % TipId
     Return
 }
@@ -192,7 +208,7 @@ HideTip(ByRef TipID) {
 ; ConstID is IMP
 ; ShowTip will only hide prev notif of same ConstID class
 ; Essentially grouping together same class of notifs which should not be dispalyed together or be overwritten by newer msgs
-ShowTip(ByRef Text, ByRef ConstID, ByRef ShowTemporarily) {
+ShowTip(Text, ConstID, ShowTemporarily) {
     Global HiderFuncs, NotifDisplayTime, LastToolTipText, LastToolTipID, ToolTipCoOrdX, ToolTipCoOrdY
 
     LastToolTipText := Text
@@ -295,6 +311,7 @@ CapsLock & F1::
     Suspend, Permit
 *F1::
     ShowKeysOn := !ShowKeysOn
+    ConfigSet("ShowKeysOn", ShowKeysOn)
     ShowKey("Show Help Messages.")
     Return
 
@@ -449,7 +466,11 @@ CapsLock & t::
 CapsLock & u::
     Suspend, Permit
 *u::
-    If GetKeyState("Alt") {
+    If GetKeyState("Shift") {
+        ShowKey("Force Update.")
+        ForceUpdaterFunc := Func("CheckForUpdates").Bind(True)
+        SetTimer, % ForceUpdaterFunc, -1
+    } Else If GetKeyState("Alt") {
         ShowKey("Check For Update.")
         SetTimer, CheckForUpdates, -1
     } Else {
@@ -510,13 +531,11 @@ CapsLock & /::
 CapsLock & F5::
     Suspend, Permit
 *F5::
-    ExitSub()
     Reload
     Return
 CapsLock & F4::
     Suspend, Permit
 *F4::
-    ExitSub()
     ExitApp
 
 *#c::
@@ -675,6 +694,7 @@ CapsLock & Tab::
 Tab::
     Global AltTab
     AltTab := Not AltTab
+    ConfigSet("AltTab", AltTab)
     If (AltTab)
         ShowKey("ReEnabling Alt+Tab Window Switching.")
     Else
@@ -731,29 +751,32 @@ ResetCaseChangeState:
     CaseChangeText := ""
     Return
 
-CapsLock & BackSpace::
+CapsLock & \::
     Suspend, Permit
-*BackSpace::
+*\::
     Global ClipStackCurr, ClipStack, FP_ClipTexts
     ShowKey("Clear ClipBoard History.")
     ShowTipClipBoard("ClipBoard History Cleared.")
     ClipStackCurr := 0
+    ConfigSet("ClipStackCurr", ClipStackCurr)
     ClipStack := []
     ClipBoardPutSync("")
     FileDelete, % FP_ClipTexts "\*.txt"
     Return
 
-CapsLock & \::
+CapsLock & BackSpace::
     Suspend, Permit
-*\::
+*BackSpace::
     Global ClipStackCurr, ClipStack
     ShowKey("Forget Current ClipBoard Text From History.")
     If (ClipStackCurr = "0") {
         Return
     }
-    ShowTipClipBoard("Forgetting ..`n`nClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr])
+    ShowTipClipBoard("Forgetting ..`n`nClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr][2])
+    FileDelete, % FP_ClipTexts "\" ClipStack[ClipStackCurr][1] ".txt"
     ClipStack.RemoveAt(ClipStackCurr)
     ClipStackCurr := Min(ClipStackCurr, ClipStack.Count())
+    ConfigSet("ClipStackCurr", ClipStackCurr)
     SetTimer, ClipBoardPopulate, -1
     Return
 
@@ -775,7 +798,8 @@ ClipBoardPrev() {
         Return
     }
     ClipStackCurr := ClipStackCurr == "1" ? ClipStack.Count() : (ClipStackCurr - 1)
-    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr], !GetKeyState("Alt"))
+    ConfigSet("ClipStackCurr", ClipStackCurr)
+    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr][2], !GetKeyState("Alt"))
     SetTimer, ClipBoardPopulate, -1
     Return
 }
@@ -798,7 +822,8 @@ ClipBoardNext() {
         Return
     }
     ClipStackCurr := ClipStackCurr == ClipStack.Count() ? 1 : (ClipStackCurr + 1)
-    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr], !GetKeyState("Alt"))
+    ConfigSet("ClipStackCurr", ClipStackCurr)
+    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr][2], !GetKeyState("Alt"))
     SetTimer, ClipBoardPopulate, -1
     Return
 }
@@ -810,12 +835,13 @@ CapsLock & MButton::
 *MButton::
     Global ClipStackCurr, ClipStack, DisableClipBoardMsgs
     DisableClipBoardMsgs := !DisableClipBoardMsgs
+    ConfigSet("DisableClipBoardMsgs", DisableClipBoardMsgs)
     Msg := ""
     If (ClipStackCurr = "0") {
         Msg := Msg "`nClipBoard Empty."
     } Else {
         Msg := Msg "`nTotal " ClipStack.Count() " ClipTexts Remembered."
-        Msg := Msg "`n`nCurrently On ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr]
+        Msg := Msg "`n`nCurrently On ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr][2]
     }
     If (DisableClipBoardMsgs) {
         Msg := "ClipBoard Notifications Disabled."
@@ -834,11 +860,11 @@ ClipBoardPopulate() {
     If (ClipStackCurr == "0")
         ClipBoardPutSync("")
     Else
-        ClipBoardPutSync(ClipStack[ClipStackCurr])
+        ClipBoardPutSync(ClipStack[ClipStackCurr][2])
 }
 
 ClipBoardListener(ClipContentType) {
-    Global ClipStackCurr, ClipStack, DisableClipBoardListener
+    Global ClipStackCurr, ClipStack, DisableClipBoardListener, FP_ClipTexts
     If (DisableClipBoardListener) {
         Return
     }
@@ -848,74 +874,46 @@ ClipBoardListener(ClipContentType) {
     }
     Loop % ClipStack.Count()
     {
-        If (ClipText == ClipStack[A_Index]) {
+        If (ClipText == ClipStack[A_Index][2]) {
             ShowTipClipBoard("ClipText Already Present.`n`n" "ClipText#" A_Index ":`n" ClipText)
             ClipStackCurr := A_Index
+            ConfigSet("ClipStackCurr", ClipStackCurr)
             Return
         }
     }
-    ClipStack.Push(ClipText)
+    ClipTextFileNameNum := (ClipStack.Count() == 0) ? 1 : (ClipStack[ClipStack.Count()][1] + 1)
+    ClipStack.Push([ClipTextFileNameNum, ClipText])
+    FileAppend, % ClipText, % FP_ClipTexts "\" ClipTextFileNameNum ".txt"
     ClipStackCurr := ClipStack.Count()
-    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr])
-}
-
-ExitSub() {
-    Suspend, Permit
-    Global FuncOfW, DisableClipBoardMsgs, ClipStackCurr, ShowKeysOn, AltTab, RmConfigOnExit
-    Global FP_ClipTexts, FP_Variables
-    If (RmConfigOnExit) {
-        FileDelete, % FP_Variables "\*.txt"
-        FileDelete, % FP_ClipTexts "\*.txt"
-        ShowTipArbitrary("Configuration Deleted.")
-    } Else {
-        ConfigSet("FuncOfW", FuncOfW)
-        ConfigSet("DisableClipBoardMsgs", DisableClipBoardMsgs)
-        ConfigSet("ClipStackCurr", ClipStackCurr)
-        ConfigSet("ShowKeysOn", ShowKeysOn)
-        ConfigSet("AltTab", AltTab)
-        ConfigSet("ToolTipCoOrdX", ToolTipCoOrdX)
-        ConfigSet("ToolTipCoOrdY", ToolTipCoOrdY)
-        SaveClipBoardHistoryOnDisk()
-        ShowTipArbitrary("Configuration Saved.")
-    }
-    ShowTipArbitrary("Exiting HotKeys App ..")
-    Return
-}
-
-SaveClipBoardHistoryOnDisk() {
-    Global FP_ClipTexts, ClipStackCurr, ClipStack, FP_ClipTexts
-    FileDelete, % FP_ClipTexts "\*.txt"
-    If (ClipStackCurr = "0") {
-        ShowTipClipBoard("No ClipTexts To Save On The Disk!")
-        Return False
-    }
-    Loop % ClipStack.Count()
-    {
-        FileAppend, % ClipStack[A_Index], % FP_ClipTexts "\" A_Index ".txt"
-    }
-    ShowTipClipBoard("ClipTexts Saved.")
-    Return True
+    ConfigSet("ClipStackCurr", ClipStackCurr)
+    ShowTipClipBoard("ClipText#" ClipStackCurr ":`n" ClipStack[ClipStackCurr][2])
 }
 
 LoadClipBoardHistoryOffOfDisk() {
     Global ClipStack, FP_ClipTexts
     ClipStack := []
-    K := 1
     FP := ""
     ClipText := ""
-    While (True) {
-        FP := FP_ClipTexts "\" K ".txt"
+    K := 0
+    Loop, % FP_ClipTexts "\*.txt"
+        K++
+    J := 0
+    ;1 I := 0
+    While (K != 0) {
+        J++
+        FP := FP_ClipTexts "\" J ".txt"
         If FileExist(FP) {
+            K--
+            ;1 I++
             FileRead, ClipText, % FP
-            ClipStack.Push(ClipText)
-            K += 1
-        } Else {
-            Return
+            ClipStack.Push([J, ClipText]) ;1-
+            ;1 ClipStack.Push([I, ClipText])
+            ;1 FileMove, % FP, % FP_ClipTexts "\" I ".txt"
         }
     }
 }
 
-ClipBoardPutSync(ByRef text) {
+ClipBoardPutSync(text) {
     Global DisableClipBoardListener, ExpectedClipBoardUpdateTime
     DisableClipBoardListener := True
     ClipBoard := text
@@ -931,10 +929,8 @@ CapsLock & `::
     Return
 
 LaunchClipTextsInNotePadPP() {
-    Global FP_ClipTexts, ClipStackCurr
-    If SaveClipBoardHistoryOnDisk() {
-        Run, % """C:\Program Files\Notepad++\notepad++.exe"" -multiInst -nosession """ FP_ClipTexts "\*.txt"" """ FP_ClipTexts "\" ClipStackCurr ".txt"""
-    }
+    Global FP_ClipTexts, ClipStack, ClipStackCurr
+    Run, % """C:\Program Files\Notepad++\notepad++.exe"" -multiInst -nosession """ FP_ClipTexts "\*.txt"" """ FP_ClipTexts "\" ClipStack[ClipStackCurr][1] ".txt"""
 }
 
 CapsLock & m::
@@ -947,9 +943,8 @@ CapsLock & m::
 CapsLock & F12::
     Suspend, Permit
 *F12::
-    Global RmConfigOnExit
-    RmConfigOnExit := True
-    ExitSub()
+    FileDelete, % FP_Variables "\*.txt"
+    FileDelete, % FP_ClipTexts "\*.txt"
     Reload
     Return
 
@@ -978,52 +973,62 @@ CapsLock & P::
         ToolTipCoOrdX := A_ScreenWidth
         ToolTipCoOrdY := A_ScreenHeight
     } Else If (ToolTipCoOrdX = A_ScreenWidth && ToolTipCoOrdY = A_ScreenHeight) {
-        ToolTipCoOrdX := 0
-        ToolTipCoOrdY := A_ScreenHeight
-    } Else If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = A_ScreenHeight) {
         CoordMode, Mouse, Screen
         MouseGetPos X, Y
         ToolTipCoOrdX := X
         ToolTipCoOrdY := Y
-    } Else {
+    } Else If (ToolTipCoOrdX = 0 && ToolTipCoOrdY = A_ScreenHeight) {
         ToolTipCoOrdX := 0
         ToolTipCoOrdY := 0
+    } Else {
+        ToolTipCoOrdX := 0
+        ToolTipCoOrdY := A_ScreenHeight
     }
+    ConfigSet("ToolTipCoOrdX", ToolTipCoOrdX)
+    ConfigSet("ToolTipCoOrdY", ToolTipCoOrdY)
     ShowTip(LastToolTipText, LastToolTipID, True)
     Return
 
-RmLF(ByRef Str) {
+RmLF(Str) {
     StringReplace, Str, Str, `r, , All
     StringReplace, Str, Str, `n, , All
     Return Str
 }
 
-CheckForUpdates() {
-    Global Version, LatestVersionURL, HotKeysExeDLURL
-    ShowTipArbitrary("Please Wait!`nChecking If An Update Is Available.")
-    LatestVersion := Version
+CheckForUpdates(ForceUpdate := False) {
+    Global Version, LatestZipURL, LatestCodeURL, LatestCode, ZipFP, UnZipDir
+    If (!ForceUpdate) {
+        ShowTipArbitrary("Please Wait!`nChecking If An Update Is Available.")
+        LatestVersion := Version
+        Try {
+            LatestCode := HttpGet(LatestCodeURL)
+            RegExMatch(LatestCode, ".*\nVersion *:= *(\d+.\d+)\n.*", Matches)
+            LatestVersion := Matches1
+        } Catch {
+            ShowTipArbitrary("Couldn't Retrieve The Latest Version!")
+            Return
+        }
+        If (LatestVersion <= Version) {
+            ShowTipArbitrary("Cheers!`nAlready Running The Latest Version Of HotKeys!")
+            Return
+        } Else {
+            MsgBox, 4, % "Update On Checking On Update!", % "An Update Is Available. Want To Try It?"
+            IfMsgBox, No
+                Return
+            IfMsgBox, TimeOut
+                Return
+        }
+    }
+    ShowTipArbitrary("Hold On Please!`nDownloading The Latest Version Of HotKeys.")
     Try {
-        LatestVersion := RmLF(HttpGet(LatestVersionURL))
-        ; MsgBox, % LatestVersion " <= " Version " ? " (LatestVersion <= Version)
-    } Catch {
-        ShowTipArbitrary("Couldn't Retrieve Latest Version!")
-        Return
+        FileCreateDir, % UnZipDir
     }
-    If (LatestVersion <= Version) {
-        ShowTipArbitrary("Cheers!`nAlready Running The Latest Version Of HotKeys!")
-        Return
-    } Else {
-        MsgBox, 4, % "Update On Checking On Update!", % "An Update Is Available. Want To Try It?"
-        IfMsgBox, No
-            Return
-        IfMsgBox, TimeOut
-            Return
-        ShowTipArbitrary("Hold On Please!`nDownloading The Latest Version Of HotKeys.")
-        DLFile(HotKeysExeDLURL, A_ScriptFullPath ".Latest", True)
-        ExitSub()
-        Run, PowerShell "Echo 'Downloaded The Latest Version. `nNow Overwriting The Old Version.'; Sleep 3; Move-Item -Path '%A_ScriptFullPath%.Latest' -Destination '%A_ScriptFullPath%' -Force; Start-Process -FilePath '%A_ScriptFullPath%' -ArgumentList '-ShowMsgUpdated';"
-        ExitApp
+    Try {
+        FileRemoveDir, % UnZipDir, 1
     }
+    DLFile(LatestZipURL, ZipFP)
+    Run, % "PowerShell ""Echo 'Downloaded The Latest Version. `nNow Installing ..'; Add-Type -Assembly 'System.IO.Compression.FileSystem'; [IO.Compression.ZipFile]::ExtractToDirectory('" ZipFP "', '" UnZipDir "'); Remove-Item -Force '" ZipFP "'; Move-Item '" UnZipDir "\*\*' '" UnZipDir "\'; Start-Process -FilePath '" UnZipDir "\Installer.bat';"""
+    ExitApp
 }
 
 HttpGet(URL) {
@@ -1034,19 +1039,26 @@ HttpGet(URL) {
     Return req.ResponseText
 }
 
-DLFile(URL, FP, OW) { ; DL=Download, FP=FilePath, OW=OverWrite
+DLFile(URL, FP, W := True, OW := True) { ; DL=Download, FP=FilePath, W=Wait, OW=OverWrite
     req := ComObjCreate("WinHttp.WinHttpRequest.5.1")
     req.Open("HEAD", URL, False)
     req.Send()
-    size_total := req.GetResponseHeader("Content-Length")
-    LastSize := 0
-    LastSizeTick := A_TickCount
-    ProgressUpdater := Func("DLProgress").Bind(URL, FP, size_total)
-    SetTimer, % ProgressUpdater, 1000
-    URLDownloadToFile, % URL, % FP
+    Try {
+        size_total := req.GetResponseHeader("Content-Length")
+        LastSize := 0
+        LastSizeTick := A_TickCount
+        ProgressUpdater := Func("DLProgress").Bind(URL, FP, size_total)
+        SetTimer, % ProgressUpdater, 1000
+    }
+    If (W) {
+        URLDownloadToFile, % URL, % FP
+    } Else {
+        DLFunc := Func("URLDownloadToFile").Bind(URL, FP)
+        SetTimer, % DLFunc, -1
+    }
 }
 
-DLProgress(ByRef URL, ByRef FP, ByRef FinalSize) {
+DLProgress(URL, FP, FinalSize) {
     Global C_M_Arbitrary, LastSizeTick, LastSize
     If !FileExist(FP) Return
     CurrentSize := 0

@@ -1,22 +1,12 @@
-Shorten traveling the keyboard to a measly 60%!
-
-This is an AutoHotKey script to bind some very useful CapsLock hotkeys to the keyboard.
-
-To have a look-see, download and run **[this](https://github.com/adandecha/HostedFilesPublic/raw/master/HotKeys.exe)**.
+Make it a 60% KeyBoard! Some very handy CapsLock **HotKeys** can make it so!
 <br/>
-To compile it manually, please read through the following.
-
-**Setting things up:**
-
-Install [Git](https://git-scm.com/download/win), [AutoHotkey](https://autohotkey.com/download/), and [Notepad++](https://notepad-plus-plus.org/downloads/).
 <br/>
-Download and extract [this](https://github.com/adandecha/HotKeys/archive/map2.zip).
+To install it, download and extract [this](https://github.com/adandecha/HotKeys/archive/map2.zip).
 <br/>
-Run [Install.bat](Install.bat) as Admin.
+And, run [Installer.bat](Installer.bat) as Admin.
 <br/>
-It adds HotKeys to Windows StartUp.
 <br/>
-In detail, it does [these](Steps.txt) set of things.
+In detail, the Installer does [these](Steps.txt) set of things.
 <br/>
 <br/>
 Done!
@@ -72,10 +62,10 @@ Ctrl+LeftClick   : Double click and type in clipboard text (Before typing, it pe
 Shift+LeftClick  : Select all and type in clipboard text (Before typing, it performs, LeftCLick Ctrl+Home ShiftDown Ctrl+End ShiftUp)
 
 Z                : Show notifications when clipboard text changes
-`                : Show the remembered cliboard texts in NotePad++ 64-bit
+`                : Show the remembered cliboard texts in NotePad++ 64-bit (get it from notepad-plus-plus.org/downloads)
 
-BackSpace        : Forget all the remembered clipboard texts
-\                : Forget current clipboard text
+\                : Forget all the remembered clipboard texts
+BackSpace        : Forget current clipboard text
 
 
 Function Keys:
@@ -131,8 +121,7 @@ Notification Management Keys:
 ------------ ---------- ----
 
 N                : Show the last notification that HotKeys gave
-P                : Cycle showing notifications from top left, to top right, bottom right,
-                   bottom left, and at the mouse pointer; go to all corners clock-wise.
+P                : Cycle showing notifications from bottom left, to top left, top right, bottom right, and at the mouse pointer; go to all corners clock-wise.
 F1               : Show help for each HotKey pressed
 
 
@@ -144,6 +133,7 @@ F4               : Exit the HotKeys app
 F12              : Clean restart the HotKeys app forgetting all config except clipboard history
 
 Alt-U            : Check for Updates, and request User to install, if available.
+Shift-U          : Force update to the latest version.
 
 ```
 
