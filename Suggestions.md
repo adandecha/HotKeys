@@ -1,4 +1,4 @@
-For the first time users, I recommend you press **CapsLock+F1+Z+M**.
+For the first time users, I recommend you press **CapsLock+F1+P+M+Z**.
 <br/>
 It'll turn on notifications and make HJKL the Arrow keys instead of WASD.
 <br/>

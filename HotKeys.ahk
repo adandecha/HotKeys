@@ -19,7 +19,6 @@ If Not (A_IsAdmin or RegExMatch(Full_Command_Line, " /restart(?!\S)"))
 #SingleInstance, Force
 #MaxThreads 4
 #MaxHotkeysPerInterval 10000000
-
 Coordmode, ToolTip, Screen
 SetFormat, Float, .2
 
@@ -99,8 +98,6 @@ SetTimer, ClipBoardPopulate, -1
 
 FuncOfW := ConfigGet("FuncOfW", "DoUp")
 SetWASDHJKL((FuncOfW == "DoUp"))
-
-NextScrollWaitTime := 500
 
 Suspend, On
 
@@ -760,17 +757,21 @@ CapsLock & \::
     SetTimer, ClipBoardPopulate, -1
     Return
 
-NoOp_SP:
+CapsLock & q::
+CapsLock & WheelDown::
+CapsLock & WheelLeft::
     Suspend, Permit
-    Return
-
-NoOp:
+*q::
+*WheelDown::
+*WheelLeft::
+    ClipBoardPrev()
     Return
 
 ClipBoardPrev() {
     Global ClipStackCurr, ClipStack
     ShowKey("Set ClipBoard To Text Copied Earlier.")
     If (ClipStackCurr = "0") {
+        ShowTipClipBoard("ClipBoard Empty!")
         Return
     }
     ClipStackCurr := ClipStackCurr == "1" ? ClipStack.Count() : (ClipStackCurr - 1)
@@ -778,44 +779,22 @@ ClipBoardPrev() {
     SetTimer, ClipBoardPopulate, -1
     Return
 }
-CapsLock & q::
-    Suspend, Permit
-*q::
-    ClipBoardPrev()
-    Return
+
+CapsLock & e::
 CapsLock & WheelUp::
-CapsLock & WheelLeft::
-ClipBoardPrevLabel_SP:
+CapsLock & WheelRight::
     Suspend, Permit
-    ClipBoardPrev()
-    WheelsPrevDisable()
-    Return
+*e::
 *WheelUp::
-*WheelLeft::
-ClipBoardPrevLabel:
-    ClipBoardPrev()
-    WheelsPrevDisable()
+*WheelRight::
+    ClipBoardNext()
     Return
-WheelsPrevDisable() {
-    If !GetKeyState("Ctrl") Return
-    Global NextScrollWaitTime
-    HotKey, *WheelUp, NoOp
-    HotKey, *WheelLeft, NoOp
-    HotKey, CapsLock & WheelUp, NoOp_SP
-    HotKey, CapsLock & WheelLeft, NoOp_SP
-    SetTimer, WheelsPrevEnable, % -NextScrollWaitTime
-}
-WheelsPrevEnable() {
-    HotKey, *WheelUp, ClipBoardPrevLabel
-    HotKey, *WheelLeft, ClipBoardPrevLabel
-    HotKey, CapsLock & WheelUp, ClipBoardPrevLabel_SP
-    HotKey, CapsLock & WheelLeft, ClipBoardPrevLabel_SP
-}
 
 ClipBoardNext() {
     Global ClipStackCurr, ClipStack
     ShowKey("Set ClipBoard To Text Copied Later.")
     If (ClipStackCurr = "0") {
+        ShowTipClipBoard("ClipBoard Empty!")
         Return
     }
     ClipStackCurr := ClipStackCurr == ClipStack.Count() ? 1 : (ClipStackCurr + 1)
@@ -823,40 +802,6 @@ ClipBoardNext() {
     SetTimer, ClipBoardPopulate, -1
     Return
 }
-CapsLock & e::
-    Suspend, Permit
-*e::
-    ClipBoardNext()
-    Return
-CapsLock & WheelDown::
-CapsLock & WheelRight::
-ClipBoardNextLabel_SP:
-    Suspend, Permit
-    ClipBoardNext()
-    WheelsNextDisable()
-    Return
-*WheelDown::
-*WheelRight::
-ClipBoardNextLabel:
-    ClipBoardNext()
-    WheelsNextDisable()
-    Return
-WheelsNextDisable() {
-    If !GetKeyState("Ctrl") Return
-    Global NextScrollWaitTime
-    HotKey, *WheelDown, NoOp
-    HotKey, *WheelRight, NoOp
-    HotKey, CapsLock & WheelDown, NoOp_SP
-    HotKey, CapsLock & WheelRight, NoOp_SP
-    SetTimer, WheelsNextEnable, % -NextScrollWaitTime
-}
-WheelsNextEnable() {
-    HotKey, *WheelDown, ClipBoardNextLabel
-    HotKey, *WheelRight, ClipBoardNextLabel
-    HotKey, CapsLock & WheelDown, ClipBoardNextLabel_SP
-    HotKey, CapsLock & WheelRight, ClipBoardNextLabel_SP
-}
-
 
 CapsLock & z::
 CapsLock & MButton::
